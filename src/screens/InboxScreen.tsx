@@ -18,7 +18,7 @@ export const InboxScreen: React.FC<{ onNew?: () => void }> = ({ onNew }) => (
     </View>
     <View
       accessibilityRole="button"
-      accessibilityLabel="Everything Worth Keeping"
+      accessibilityLabel="Your Unstructured Thoughts"
       style={{ position: 'absolute', left: 16.01, top: 357.3, width: 360.98, height: 18.9 }}
     >
       <Text
@@ -32,7 +32,7 @@ export const InboxScreen: React.FC<{ onNew?: () => void }> = ({ onNew }) => (
           color: colors.ink,
         }}
       >
-        Everything Worth Keeping
+        Your Unstructured Thoughts
       </Text>
     </View>
     <Text
@@ -49,7 +49,7 @@ export const InboxScreen: React.FC<{ onNew?: () => void }> = ({ onNew }) => (
         color: colors.inkSecondary,
       }}
     >
-      {`Drop tasks and ideas here as they come. Move them to your timeline when you want to schedule them.`}
+      {`Capture tasks and thoughts as they come. Move them to your timeline when you want to schedule them.`}
     </Text>
     <Pressable
       accessibilityRole="button"
