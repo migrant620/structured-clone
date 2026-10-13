@@ -9,7 +9,7 @@ export const colors = {
   accentWash: '#FDECEB',
   ink: '#000000',
   inkSecondary: '#8A8A8E',
-  navInk: '#828286',
+  navInk: '#8A8A8E',
   navPill: '#EDDCDB',
   wheelInk: '#A6A6AA',
   doneInk: '#59595F',
