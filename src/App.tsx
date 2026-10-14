@@ -50,7 +50,7 @@ const readScenario = (): Scenario => {
 const TIMELINE_SCENARIOS: Scenario[] = ['S1', 'S2', 'S6', 'S7', 'S10'];
 const SHEET_SCENARIOS: Scenario[] = ['S1', 'S2', 'S6', 'S7', 'S10'];
 
-export default function App() {
+export default React.memo(function App() {
   const [fontsLoaded] = useFonts({
     RobotoText: require('../assets/fonts/RobotoText.ttf'),
     RobotoGutter: require('../assets/fonts/RobotoGutter.ttf'),
@@ -250,4 +250,4 @@ export default function App() {
       ) : null}
     </View>
   );
-}
+});
