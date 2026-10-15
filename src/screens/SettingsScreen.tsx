@@ -76,7 +76,7 @@ const Row: React.FC<{
 };
 
 const GroupCard: React.FC<{ top: number; h: number }> = ({ top, h }) => (
-  <View style={{ position: 'absolute', left: 16.01, top, width: 360.73, height: h, borderRadius: 16, backgroundColor: colors.sheet }} />
+  <View style={{ position: 'absolute', left: 16.01, top, width: 360.73, height: h, borderRadius: 8, backgroundColor: colors.sheet }} />
 );
 
 export const SettingsScreen: React.FC = () => (

@@ -33,6 +33,9 @@ const DURATION_SEGMENTS: readonly { label: string; unit: string; box: { left: nu
   { label: '1,5h', unit: '1,5h', box: null },
 ];
 const SWATCH = { left: 16.01, top: 692.55, w: 360.73, h: 56.0 };
+const TILE_ELEVATION = {
+  shadowColor: '#000000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.26, shadowRadius: 9,
+} as const;
 const DISC = { d: 24.74, cy: 718.85, firstCx: 46.0, pitch: 40.0 };
 
 const SUGGESTION_ICONS = { at: AtIcon, tv: TvIcon, people: Person2Icon, run: RunIcon } as const;
@@ -132,7 +135,10 @@ export const EditorSheet: React.FC<{
 
       <Pressable
         accessibilityRole="button"
-        style={{ position: 'absolute', left: 16.01, top: tileTop, width: TILE_W, height: TILE_W, backgroundColor: '#FFFFFF', borderRadius: 14 }}
+        style={{
+          position: 'absolute', left: 16.01, top: tileTop, width: TILE_W, height: TILE_W,
+          backgroundColor: '#FFFFFF', borderRadius: 8, ...TILE_ELEVATION,
+        }}
       >
         <Pressable
           accessibilityRole="button"
@@ -202,7 +208,11 @@ export const EditorSheet: React.FC<{
                 accessibilityRole="button"
                 accessibilityLabel={s.title}
                 onPress={() => onPickSuggestion(s.title)}
-                style={{ position: 'absolute', left: CARD.left, top, width: CARD.w, height: CARD.h, backgroundColor: '#FFFFFF', borderRadius: 16 }}
+                style={{
+                  position: 'absolute', left: CARD.left, top, width: CARD.w, height: CARD.h,
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 12,
+                }}
               >
                 <Pressable
                   accessibilityRole="button"
@@ -311,7 +321,10 @@ export const EditorSheet: React.FC<{
           >
             More...
           </Text>
-          <View pointerEvents="none" style={{ position: 'absolute', left: TRAY.left, top: TRAY.top, width: TRAY.w, height: TRAY.h, borderRadius: 16, backgroundColor: '#FFFFFF' }} />
+          <View pointerEvents="none" style={{
+            position: 'absolute', left: TRAY.left, top: TRAY.top, width: TRAY.w, height: TRAY.h,
+            borderRadius: 8, backgroundColor: '#FFFFFF',
+          }} />
           <View
             pointerEvents="none"
             style={{
@@ -454,7 +467,10 @@ const CommitButton: React.FC<{ label: string; labelBox: { left: number; top: num
     accessibilityRole="button"
     accessibilityLabel={label}
     onPress={onPress}
-    style={{ position: 'absolute', left: BUTTON.left, top: BUTTON.top, width: BUTTON.w, height: BUTTON.h, borderRadius: 16, backgroundColor: colors.accent }}
+    style={{
+    position: 'absolute', left: BUTTON.left, top: BUTTON.top, width: BUTTON.w, height: BUTTON.h,
+    borderRadius: 8, backgroundColor: colors.accent,
+  }}
   >
     <Text
       style={{
