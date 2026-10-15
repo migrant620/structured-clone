@@ -69,7 +69,7 @@ const Row: React.FC<{
         </View>
       </Pressable>
       {divider ? (
-        <View style={{ position: 'absolute', left: 82.24, top: rowTop + ROW_H, width: 294.49, height: 1, backgroundColor: colors.surfaceMuted }} />
+        <View style={{ position: 'absolute', left: 82.24, top: rowTop + ROW_H + 1, width: 294.49, height: 1, backgroundColor: colors.settingRule }} />
       ) : null}
     </View>
   );
