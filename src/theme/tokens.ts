@@ -5,6 +5,8 @@ export const colors = {
   navBar: '#EBEBEB',
   surface: '#FFFFFF',
   surfaceMuted: '#EBEBEB',
+  settingRule: '#C4C4C6',
+  detailRule: '#BBBBBF',
   accent: '#F49F99',
   accentWash: '#FDECEB',
   ink: '#000000',
