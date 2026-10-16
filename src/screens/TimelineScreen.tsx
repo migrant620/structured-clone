@@ -732,9 +732,9 @@ export const TimelineScreen: React.FC<{
           alignItems: 'center',
           justifyContent: 'center',
           shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.3,
-          shadowRadius: 20,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.22,
+          shadowRadius: 16,
         }}
       >
         <Pressable
