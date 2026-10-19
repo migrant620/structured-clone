@@ -27,10 +27,11 @@ type RowLayout = {
 
 export const rowLayout: Record<string, RowLayout> = {
   rise: {
-    subTop: 177.45,
+    subTop: 178.15,
     titleTop: 193.82,
     titleLineHeight: 21.09,
-    discCy: 195.9,
+    discCy: 196.5,
+    ringCy: 196.8,
     discD: 60.5,
     recurringLeft: 186.55,
     recurringTop: 177.45,
@@ -42,6 +43,7 @@ export const rowLayout: Record<string, RowLayout> = {
     titleTop: 372.73,
     titleLineHeight: 21.64,
     discCy: 395.1,
+    ringCy: 395.9,
     discD: 76.5,
     notesTop: 418.18,
   },
@@ -49,7 +51,8 @@ export const rowLayout: Record<string, RowLayout> = {
     subTop: 448.36,
     titleTop: 464.73,
     titleLineHeight: 21.09,
-    discCy: 476.0,
+    discCy: 476.7,
+    ringCy: 477.0,
     discD: 60.5,
     countTop: 489.09,
     notesTop: 488.0,
@@ -59,7 +62,8 @@ export const rowLayout: Record<string, RowLayout> = {
     subTop: 520.36,
     titleTop: 536.73,
     titleLineHeight: 21.09,
-    discCy: 548.0,
+    discCy: 548.7,
+    ringCy: 549.1,
     discD: 60.5,
     notesTop: 560.0,
   },
@@ -67,12 +71,13 @@ export const rowLayout: Record<string, RowLayout> = {
     subTop: 592.36,
     titleTop: 608.73,
     titleLineHeight: 21.09,
-    discCy: 620.0,
+    discCy: 620.8,
+    ringCy: 621.1,
     discD: 60.5,
     notesTop: 632.0,
   },
   teamSync: {
-    subTop: 687.0,
+    subTop: 687.6,
     titleTop: 703.4,
     titleLineHeight: 10.6,
     discCy: 692.0,
@@ -199,14 +204,16 @@ const Disc: React.FC<{
   );
 };
 
-const Ring: React.FC<{ cy: number; onOpen: () => void; h?: number; done?: boolean }> = ({ cy, onOpen, h = 48, done = false }) => {
+const Ring: React.FC<{ cy: number; onToggle: () => void; h?: number; done?: boolean }> = ({ cy, onToggle, h = 48, done = false }) => {
   const { cx, outer, stroke } = space.ring;
   const BOX_W = 47.7;
   const BOX_H = h;
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={onOpen}
+      accessibilityState={{ checked: done }}
+      aria-checked={done}
+      onPress={onToggle}
       style={{ position: 'absolute', left: cx - BOX_W / 2, top: cy - BOX_H / 2, width: BOX_W, height: BOX_H, alignItems: 'center', justifyContent: 'center' }}
     >
       {done ? (
@@ -275,13 +282,18 @@ const Connector: React.FC<{ from: number; to: number; color?: string; solid?: bo
   );
 };
 
-const Row: React.FC<{ task: Task; layout: RowLayout; onOpen: (id: string) => void }> = ({ task, layout, onOpen }) => {
+const Row: React.FC<{ task: Task; layout: RowLayout; onOpen: (id: string) => void; onToggle?: (id: string) => void }> = ({
+  task,
+  layout,
+  onOpen,
+  onToggle,
+}) => {
   const l = layout;
   const tall = l.discD >= 70;
   return (
     <View>
       <Disc icon={task.icon} scheduled={task.scheduled} done={task.done} d={l.discD} cy={l.discCy} onOpen={() => onOpen(task.id)} glyphBox={l.glyphBox} glyphDy={l.glyphDy} />
-      <Ring cy={l.ringCy ?? l.discCy} h={l.ringH} onOpen={() => onOpen(task.id)} done={task.done} />
+      <Ring cy={l.ringCy ?? l.discCy} h={l.ringH} onToggle={() => (onToggle ? onToggle(task.id) : onOpen(task.id))} done={task.done} />
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={task.title}
@@ -296,7 +308,16 @@ const Row: React.FC<{ task: Task; layout: RowLayout; onOpen: (id: string) => voi
           borderRadius: 8,
         })}
       >
-        <Text style={{ position: 'absolute', left: 0, top: 0, ...type.rowMeta, color: colors.inkSecondary }}>
+        <Text
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            ...type.rowMeta,
+            letterSpacing: task.rangeLabel ? 0.12 : task.scheduled ? 0.19 : type.rowMeta.letterSpacing,
+            color: colors.inkSecondary,
+          }}
+        >
           {task.rangeLabel ?? (task.scheduled && task.start !== null ? formatClock(task.start) : task.sub)}
         </Text>
         {l.compact ? (
@@ -610,8 +631,9 @@ export const TimelineScreen: React.FC<{
   hint: string;
   onOpen: (id: string) => void;
   onAdd: () => void;
+  onToggle?: (id: string) => void;
   scenario?: 'S1' | 'S2' | 'S6' | 'S7' | 'S10';
-}> = ({ tasks, hint, onOpen, onAdd, scenario = 'S1' }) => {
+}> = ({ tasks, hint, onOpen, onAdd, onToggle, scenario = 'S1' }) => {
   const scrolled = scenario === 'S10' || scenario === 'S7';
   const GUTTER_ACTIVE =
     scenario === 'S1'
@@ -683,7 +705,7 @@ export const TimelineScreen: React.FC<{
         </Text>
       ))}
       {shown.map((task) => (
-        <Row key={task.id} task={task} layout={layouts[task.id]} onOpen={onOpen} />
+        <Row key={task.id} task={task} layout={layouts[task.id]} onOpen={onOpen} onToggle={onToggle} />
       ))}
     </View>
   );
@@ -694,7 +716,7 @@ export const TimelineScreen: React.FC<{
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="timer"
-          onPress={() => undefined}
+          onPress={onAdd}
           style={{ position: 'absolute', left: space.textLeft, top: 682.3, width: 14.18, height: 14.18 }}
         >
           <TimerIcon size={14.18} color={colors.inkSecondary} />
@@ -714,8 +736,8 @@ export const TimelineScreen: React.FC<{
       {scenario === 'S1' && !tasks.some((t) => t.id.startsWith('user-')) && (
         <Pressable
           accessibilityRole="button"
-          onPress={() => undefined}
-          style={{ position: 'absolute', left: 128, top: 701.45, width: 84.73, height: 12 }}
+          onPress={onAdd}
+          style={{ position: 'absolute', left: 128, top: 701.95, width: 84.73, height: 12 }}
         />
       )}
       <Pressable

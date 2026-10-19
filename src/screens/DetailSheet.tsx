@@ -103,7 +103,7 @@ export const DetailSheet: React.FC<{
       >
         <AtIcon width={23} height={23} color={colors.accent} />
       </View>
-      <Text style={{ position: 'absolute', left: 60.04, top: 65.47, width: 206.32, height: 16.38, fontFamily: fontFamily.sub, fontSize: 13.8, letterSpacing: 0.08, lineHeight: 16.38, color: '#85858A' }}>
+      <Text style={{ position: 'absolute', left: 60.04, top: 64.57, width: 206.32, height: 16.38, fontFamily: fontFamily.sub, fontSize: 13.8, letterSpacing: 0.08, lineHeight: 16.38, color: '#85858A' }}>
         {range}
       </Text>
       <Text
@@ -147,7 +147,7 @@ export const DetailSheet: React.FC<{
         >
           <PencilIcon size={18.19} color={colors.accent} />
         </View>
-        <Text style={{ position: 'absolute', left: 164.11 - 16.01, top: 724.5 - 710.3, height: 23.29, ...type.rowTitle, fontSize: 20.25, lineHeight: 23.29, color: colors.accent }}>
+        <Text style={{ position: 'absolute', left: 164.11 - 16.01, top: 724.5 - 710.3 + 0.7, height: 23.29, ...type.rowTitle, letterSpacing: 0.15, fontSize: 20.25, lineHeight: 23.29, color: colors.accent }}>
           Edit Task
         </Text>
       </Pressable>
@@ -181,17 +181,17 @@ export const DeleteDialog: React.FC<{
         backgroundColor: colors.sheet,
       }}
     >
-      <Text style={{ position: 'absolute', left: 21.01, top: 23.28, height: 25.84, fontFamily: fontFamily.number, fontSize: 21.6, lineHeight: 25.84, color: colors.ink }}>
+      <Text style={{ position: 'absolute', left: 21.01, top: 24.18, height: 25.84, fontFamily: fontFamily.number, fontSize: 21.6, letterSpacing: 0.18, lineHeight: 25.84, color: colors.ink }}>
         Delete Task
       </Text>
-      <Text style={{ position: 'absolute', left: 21.01, top: 82.31, width: 263.82, height: 16.38, fontFamily: fontFamily.sub, fontSize: 13.8, letterSpacing: 0.08, lineHeight: 16.38, color: '#85858A' }}>
+      <Text style={{ position: 'absolute', left: 21.01, top: 81.31, width: 263.82, height: 16.38, fontFamily: fontFamily.sub, fontSize: 13.8, letterSpacing: 0.08, lineHeight: 16.38, color: '#85858A' }}>
         Are you sure you want to delete this task?
       </Text>
       <Pressable accessibilityRole="button" onPress={onCancel} style={{ position: 'absolute', left: 148.1, top: 121.0, width: 96.71, height: 27.4 }}>
-        <Text style={{ position: 'absolute', left: 5.0, top: 8.6, height: 16.38, fontFamily: fontFamily.title, fontSize: 14.5, letterSpacing: 0.08, lineHeight: 16.38, color: colors.inkSecondary }}>Cancel</Text>
+        <Text style={{ position: 'absolute', left: 5.0, top: 8.6, height: 16.38, fontFamily: fontFamily.title, fontSize: 14.5, letterSpacing: -0.17, lineHeight: 16.38, color: colors.inkSecondary }}>Cancel</Text>
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityLabel="Delete" onPress={onDelete} style={{ position: 'absolute', left: 223.4, top: 121.0, width: 70, height: 27.4 }}>
-        <Text style={{ position: 'absolute', left: 5.0, top: 8.6, height: 16.38, fontFamily: fontFamily.title, fontSize: 14.5, letterSpacing: 0.08, lineHeight: 16.38, color: '#B3261E' }}>Delete</Text>
+        <Text style={{ position: 'absolute', left: 5.0, top: 8.6, height: 16.38, fontFamily: fontFamily.title, fontSize: 14.5, letterSpacing: -0.14, lineHeight: 16.38, color: '#B3261E' }}>Delete</Text>
       </Pressable>
     </View>
     </Pressable>
@@ -217,7 +217,7 @@ export const ProChip: React.FC<{ x: number; y: number }> = ({ x, y }) => (
     >
       <StarIcon size={14} color="#FFFFFF" />
     </View>
-    <Text style={{ position: 'absolute', left: 25.9, top: 0.63, width: 29.5, fontFamily: fontFamily.chip, fontSize: 14.5, letterSpacing: 0.08, lineHeight: 16.38, color: '#FFFFFF' }}>
+    <Text style={{ position: 'absolute', left: 25.9, top: 2.03, width: 29.5, fontFamily: fontFamily.chip, fontSize: 14.5, letterSpacing: -0.15, lineHeight: 16.38, color: '#FFFFFF' }}>
       PRO
     </Text>
   </View>

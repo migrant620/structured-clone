@@ -8,8 +8,21 @@ import { DetailSheet, DeleteDialog } from './screens/DetailSheet';
 import { InboxScreen } from './screens/InboxScreen';
 import { AiScreen } from './screens/AiScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { PaywallSheet, WhatsNewSheet } from './screens/ProSheets';
 import { colors, frame, space } from './theme/tokens';
-import { formatRange, initialTasks, planningHint, s2Tasks, s7Tasks, s10Tasks, Task } from './store';
+import {
+  DEFAULT_START,
+  durationPresets,
+  formatRange,
+  initialTasks,
+  nextFreeStart,
+  planningHint,
+  recentSuggestions,
+  s2Tasks,
+  s7Tasks,
+  s10Tasks,
+  Task,
+} from './store';
 
 const weekDays: WeekDay[] = [
   { label: 'Mon', number: '28', marks: ['alarm', 'checklist', 'plus', 'plain'] },
@@ -81,19 +94,20 @@ export default React.memo(function App() {
   const [selectedDay, setSelectedDay] = React.useState(scenario === 'S2' || scenario === 'S6' || scenario === 'S7' ? 1 : 0);
   const [editor, setEditor] = React.useState<
     | null
-    | { mode: 'new'; step: 1 | 2; title: string; duration: number; rolled?: boolean }
-    | { mode: 'edit'; step: 2; title: string; duration: number; rolled?: boolean }
+    | { mode: 'new'; step: 1 | 2; title: string; duration: number; start: number }
+    | { mode: 'edit'; step: 2; title: string; duration: number; start: number }
   >(() => {
     switch (scenario) {
-      case 'S3': return { mode: 'new', step: 1, title: '', duration: 15 };
-      case 'S3b': return { mode: 'new', step: 1, title: 'Weekly review', duration: 15 };
-      case 'S4': return { mode: 'new', step: 2, title: 'Weekly review', duration: 15 };
-      case 'S5': return { mode: 'new', step: 2, title: 'Weekly review', duration: 30 };
-      case 'S8': return { mode: 'edit', step: 2, title: 'Weekly review', duration: 30 };
-      case 'S9': return { mode: 'edit', step: 2, title: 'Weekly review', duration: 30, rolled: true };
+      case 'S3': return { mode: 'new', step: 1, title: '', duration: 15, start: DEFAULT_START };
+      case 'S3b': return { mode: 'new', step: 1, title: 'Weekly review', duration: 15, start: DEFAULT_START };
+      case 'S4': return { mode: 'new', step: 2, title: 'Weekly review', duration: 15, start: DEFAULT_START };
+      case 'S5': return { mode: 'new', step: 2, title: 'Weekly review', duration: 30, start: DEFAULT_START };
+      case 'S8': return { mode: 'edit', step: 2, title: 'Weekly review', duration: 30, start: DEFAULT_START };
+      case 'S9': return { mode: 'edit', step: 2, title: 'Weekly review', duration: 30, start: 20 * 60 + 15 };
       default: return null;
     }
   });
+  const [proSurface, setProSurface] = React.useState<null | 'news' | 'paywall'>(null);
   const [openId, setOpenId] = React.useState<string | null>(
     scenario === 'S6' || scenario === 'S7' ? 'teamSync' : null
   );
@@ -109,8 +123,7 @@ export default React.memo(function App() {
     setOpenId(null);
     setConfirmId(null);
   }, []);
-  const commitTask = React.useCallback((title: string, duration: number) => {
-    const start = 19 * 60 + 45;
+  const commitTask = React.useCallback((title: string, duration: number, start: number) => {
     const range = formatRange(start, duration);
     const task: Task = {
       id: `user-${Date.now()}`,
@@ -131,20 +144,19 @@ export default React.memo(function App() {
     setEditor(null);
   }, []);
 
-  const applyEdit = React.useCallback((id: string, title: string, duration: number) => {
+  const applyEdit = React.useCallback((id: string, title: string, duration: number, start: number) => {
     setTasks((s) =>
       s.map((t) => {
         if (t.id !== id) return t;
-        const start = t.start ?? 19 * 60 + 45;
         const range = formatRange(start, duration);
-        return { ...t, title: title || t.title, duration, sub: range, rangeLabel: range };
+        return { ...t, title: title || t.title, start, duration, sub: range, rangeLabel: range };
       })
     );
   }, []);
 
   const onFab = React.useCallback(() => {
-    if (editor === null) setEditor({ mode: 'new', step: 1, title: '', duration: 15 });
-  }, [editor]);
+    if (editor === null) setEditor({ mode: 'new', step: 1, title: '', duration: 15, start: nextFreeStart(tasks) });
+  }, [editor, tasks]);
 
   if (!fontsLoaded) {
     return <View style={{ width: frame.width, height: frame.height, backgroundColor: colors.page }} />;
@@ -156,7 +168,7 @@ export default React.memo(function App() {
 
   return (
     <View style={{ width: frame.width, height: frame.height, backgroundColor: colors.page, overflow: 'hidden' }}>
-      {!chromeless && <Header month="September" year="2026" />}
+      {!chromeless && <Header month="September" year="2026" onCalendars={() => setProSurface('news')} />}
       {!chromeless && (
         <WeekStrip
           days={selectedDay === 1 ? weekDaysS2 : weekDays}
@@ -186,12 +198,15 @@ export default React.memo(function App() {
             hint={scenario === 'S2' || scenario === 'S6' ? '' : scenario === 'S1' ? planningHint : ''}
             onOpen={openTask}
             onAdd={onFab}
+            onToggle={toggleDone}
             scenario={timelineScenario}
           />
         ) : null}
         {tab === 'inbox' ? <InboxScreen onNew={onFab} /> : null}
         {tab === 'ai' ? <AiScreen onNew={onFab} /> : null}
-        {tab === 'settings' ? <SettingsScreen /> : null}
+        {tab === 'settings' ? (
+          <SettingsScreen onPro={() => setProSurface('paywall')} onGoogleCalendar={() => setProSurface('news')} />
+        ) : null}
       </View>
       <View
         pointerEvents="none"
@@ -218,7 +233,13 @@ export default React.memo(function App() {
             setOpenId(null);
           }}
           onEdit={() =>
-            setEditor({ mode: 'edit', step: 2, title: openTaskObj.title, duration: openTaskObj.duration })
+            setEditor({
+              mode: 'edit',
+              step: 2,
+              title: openTaskObj.title,
+              duration: openTaskObj.duration,
+              start: openTaskObj.start ?? DEFAULT_START,
+            })
           }
           onClose={() => setOpenId(null)}
         />
@@ -233,23 +254,32 @@ export default React.memo(function App() {
           step={editor.step}
           title={editor.title}
           duration={editor.duration}
-          rolled={editor.rolled}
+          start={editor.start}
+          recent={editor.mode === 'new' ? recentSuggestions(tasks) : []}
           onTitle={(v) => setEditor((e) => (e ? { ...e, title: v } : e))}
-          onPickSuggestion={(title: string) =>
-            setEditor((e) => (e ? { ...e, title, step: 2 } : e))
+          onPickSuggestion={(title: string, minutes: number) =>
+            setEditor((e) =>
+              e ? { ...e, title, step: 2, duration: durationPresets.includes(minutes) ? minutes : e.duration } : e
+            )
           }
           onDuration={(minutes: number) => setEditor((e) => (e ? { ...e, duration: minutes } : e))}
+          onStart={(minutes: number) => setEditor((e) => (e ? { ...e, start: minutes } : e))}
           onCommit={() => {
             if (editor.step === 1) setEditor({ ...editor, step: 2 });
             else if (editor.mode === 'edit') {
-              if (openId) applyEdit(openId, editor.title, editor.duration);
+              if (openId) applyEdit(openId, editor.title, editor.duration, editor.start);
               setOpenId(null);
               setEditor(null);
-            } else commitTask(editor.title || 'Answer Emails', editor.duration);
+            } else commitTask(editor.title || 'Answer Emails', editor.duration, editor.start);
           }}
           onClose={() => setEditor(null)}
         />
       ) : null}
+
+      {proSurface === 'news' ? (
+        <WhatsNewSheet onDismiss={() => setProSurface(null)} onLearnMore={() => setProSurface('paywall')} />
+      ) : null}
+      {proSurface === 'paywall' ? <PaywallSheet onClose={() => setProSurface(null)} /> : null}
     </View>
   );
 });

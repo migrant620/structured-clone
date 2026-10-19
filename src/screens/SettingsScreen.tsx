@@ -13,12 +13,13 @@ import {
 import { ProChip } from './DetailSheet';
 import { colors, fontFamily, frame, type } from '../theme/tokens';
 
-const SectionLabel: React.FC<{ label: string; top: number }> = ({ label, top }) => (
+const SectionLabel: React.FC<{ label: string; top: number; clip?: number }> = ({ label, top, clip }) => (
   <Text
     style={{
       position: 'absolute',
       left: 32.02,
-      top,
+      top: top + 0.5,
+      ...(clip ? { height: clip } : null),
       width: 344.97,
       fontFamily: fontFamily.now,
       fontSize: 14.0,
@@ -38,7 +39,7 @@ const Tile: React.FC<{ top: number; bg: string; children: React.ReactNode }> = (
 );
 
 const ROW_H = 54.18;
-const TITLE_TOP = 18.33;
+const TITLE_TOP = 18.83;
 const VALUE_TOP = 19.42;
 
 const Row: React.FC<{
@@ -49,12 +50,13 @@ const Row: React.FC<{
   toggle?: boolean;
   pro?: boolean;
   divider?: boolean;
-}> = ({ title, rowTop, value, valueLeft = 296.57, toggle, pro, divider = false }) => {
+  onPress?: () => void;
+}> = ({ title, rowTop, value, valueLeft = 296.57, toggle, pro, divider = false, onPress }) => {
   const cy = rowTop + ROW_H / 2;
   return (
     <View>
-      <Pressable accessibilityRole="button" accessibilityLabel={title} style={{ position: 'absolute', left: 16.01, top: rowTop, width: 360.73, height: ROW_H }}>
-        <Text style={{ position: 'absolute', left: 66.23, top: TITLE_TOP, fontFamily: fontFamily.setting, fontSize: 16.6, letterSpacing: 0.15, lineHeight: 18.92, color: colors.ink }}>
+      <Pressable accessibilityRole="button" accessibilityLabel={title} onPress={onPress} style={{ position: 'absolute', left: 16.01, top: rowTop, width: 360.73, height: ROW_H }}>
+        <Text style={{ position: 'absolute', left: 66.23, top: TITLE_TOP, fontFamily: fontFamily.setting, fontSize: 16.6, letterSpacing: 0.11, lineHeight: 18.92, color: colors.ink }}>
           {title}
         </Text>
         {value ? (
@@ -79,14 +81,14 @@ const GroupCard: React.FC<{ top: number; h: number }> = ({ top, h }) => (
   <View style={{ position: 'absolute', left: 16.01, top, width: 360.73, height: h, borderRadius: 8, backgroundColor: colors.sheet }} />
 );
 
-export const SettingsScreen: React.FC = () => (
+export const SettingsScreen: React.FC<{ onPro?: () => void; onGoogleCalendar?: () => void }> = ({ onPro, onGoogleCalendar }) => (
   <View style={{ position: 'absolute', left: 0, top: 0, width: frame.width, height: frame.height, backgroundColor: colors.page }}>
     <Text style={{ position: 'absolute', left: 16.01, top: 17.83, width: 180, ...type.header, color: colors.ink }}>
       Settings
     </Text>
 
     <View style={{ position: 'absolute', left: 16.01, top: 78.91, width: 360.73, height: 89.09, borderRadius: 20, backgroundColor: colors.accent }} />
-    <Pressable accessibilityRole="button" accessibilityLabel="Structured Pro" style={{ position: 'absolute', left: 32.02, top: 88.79, width: 62.22, height: 62.22 }}>
+    <Pressable accessibilityRole="button" accessibilityLabel="Structured Pro" onPress={onPro} style={{ position: 'absolute', left: 32.02, top: 88.79, width: 62.22, height: 62.22 }}>
       <ProBadgeIcon size={62.22} color={colors.accent} />
     </Pressable>
     <Text
@@ -139,8 +141,8 @@ export const SettingsScreen: React.FC = () => (
     <Tile top={614.05} bg="#974767">
       <CalendarFillIcon size={26} color="#fff" />
     </Tile>
-    <Row title="Google Calendar" rowTop={611.56} pro />
+    <Row title="Google Calendar" rowTop={611.56} pro onPress={onGoogleCalendar} />
 
-    <SectionLabel label="SUPPORT" top={702.31} />
+    <SectionLabel label="SUPPORT" top={701.81} clip={11.6} />
   </View>
 );

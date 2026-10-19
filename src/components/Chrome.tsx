@@ -40,6 +40,7 @@ export const Header: React.FC<{ month: string; year: string; onCalendars?: () =>
         left: space.header.titleLeft,
         top: space.header.titleTop,
         ...type.header,
+        letterSpacing: -0.1,
         color: colors.ink,
       }}
     />
@@ -118,17 +119,20 @@ export const WeekStrip: React.FC<{ days: WeekDay[]; selected: number; s2?: boole
       const isSel = i === selected;
       const marks = day.marks;
       const pitch = 12;
-      const firstMarkLeft = left + space.week.columnPitch / 2 - (marks.length * 8 + (marks.length - 1) * (pitch - 8)) / 2;
+      const plainTrim = marks[marks.length - 1] === 'plain' ? 0.95 : 0;
+      const firstMarkLeft = left + space.week.columnPitch / 2 - (marks.length * 8 + (marks.length - 1) * (pitch - 8)) / 2 + plainTrim;
       return (
         <View key={day.label + i}>
           <Text
             style={{
               position: 'absolute',
               left,
-              top: space.week.labelTop,
+              top: space.week.labelTop - 0.96,
+              height: space.week.labelHeight,
               width: space.week.columnPitch,
               textAlign: 'center',
               ...type.dayLabel,
+              lineHeight: 16.1,
               color: colors.inkSecondary,
             }}
           >
@@ -151,11 +155,12 @@ export const WeekStrip: React.FC<{ days: WeekDay[]; selected: number; s2?: boole
             <Text
               style={{
                 position: 'absolute',
-                left,
-                top: space.week.numberTop,
+                top: space.week.numberTop + 0.52,
+                left: left + 0.36,
                 width: space.week.columnPitch,
                 textAlign: 'center',
                 ...type.dayNumber,
+                letterSpacing: 0,
                 color: isSel ? '#FFFFFF' : colors.ink,
               }}
             >
@@ -173,11 +178,14 @@ export const WeekStrip: React.FC<{ days: WeekDay[]; selected: number; s2?: boole
 
 export type NavKey = 'inbox' | 'timeline' | 'ai' | 'settings';
 
+const NAV_ICON_DY = 0.52;
+const NAV_LABEL_DY = 1.05;
+
 const NAV = [
-  { key: 'inbox' as const, label: 'Inbox', cx: 49.09 },
-  { key: 'timeline' as const, label: 'Timeline', cx: 147.27 },
-  { key: 'ai' as const, label: 'AI', cx: 245.45 },
-  { key: 'settings' as const, label: 'Settings', cx: 343.64 },
+  { key: 'inbox' as const, label: 'Inbox', cx: 49.09, tracking: 0.18 },
+  { key: 'timeline' as const, label: 'Timeline', cx: 147.27, tracking: 0.19 },
+  { key: 'ai' as const, label: 'AI', cx: 245.45, tracking: 0.43 },
+  { key: 'settings' as const, label: 'Settings', cx: 343.64, tracking: 0.22 },
 ];
 
 export const BottomNav: React.FC<{ active: NavKey; onSelect: (k: NavKey) => void }> = ({ active, onSelect }) => (
@@ -214,7 +222,7 @@ export const BottomNav: React.FC<{ active: NavKey; onSelect: (k: NavKey) => void
           accessibilityRole="button"
           accessibilityLabel={item.label}
           onPress={() => onSelect(item.key)}
-          style={{ position: 'absolute', left: item.cx - 12, top: 0, width: 24, height: 24 }}
+          style={{ position: 'absolute', left: item.cx - 12, top: NAV_ICON_DY, width: 24, height: 24 }}
         >
           {glyph}
         </Pressable>
@@ -228,10 +236,11 @@ export const BottomNav: React.FC<{ active: NavKey; onSelect: (k: NavKey) => void
           style={{
             position: 'absolute',
             left: item.cx - 60,
-            top: space.nav.labelTop - space.nav.iconTop,
+            top: space.nav.labelTop - space.nav.iconTop + NAV_LABEL_DY,
             width: 120,
             textAlign: 'center',
             ...type.navLabel,
+            letterSpacing: item.tracking,
             color: on ? colors.accent : colors.navInk,
           }}
         >
