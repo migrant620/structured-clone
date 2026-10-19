@@ -3,7 +3,7 @@ import { AccessibilityRole, Pressable, Text, TextInput, View } from 'react-nativ
 import { TwoToneRun } from '../components/TwoToneRun';
 import { AtIcon, CalendarSmallIcon, RunIcon, TvIcon, Person2Icon, XIcon } from '../icons';
 import { colors, fontFamily } from '../theme/tokens';
-import { durationPresets, suggestions, titlePlaceholder } from '../store';
+import { DEFAULT_START, durationPresets, formatSuggestionRange, Suggestion, suggestions, titlePlaceholder } from '../store';
 
 const PAGE = colors.page;
 const INK = colors.ink;
@@ -60,18 +60,21 @@ export const EditorSheet: React.FC<{
   title: string;
   duration: number;
   rolled?: boolean;
+  start?: number;
+  recent?: Suggestion[];
   onTitle: (v: string) => void;
-  onPickSuggestion: (title: string) => void;
+  onPickSuggestion: (title: string, duration: number) => void;
   onDuration?: (minutes: number) => void;
+  onStart?: (minutes: number) => void;
   onCommit: () => void;
   onClose: () => void;
-}> = ({ mode, step, title, duration, rolled = false, onTitle, onPickSuggestion, onDuration, onCommit, onClose }) => {
+}> = ({ mode, step, title, duration, rolled = false, start, recent = [], onTitle, onPickSuggestion, onDuration, onStart, onCommit, onClose }) => {
   const editing = mode === 'edit';
   const heading = editing ? 'Edit Task' : 'New Task';
   const span = editing ? TITLE_SPAN.edit : TITLE_SPAN.new;
   const fieldTop = step === 1 ? 119.36 : 96.07;
   const tileTop = fieldTop;
-  const base = rolled ? 20 * 60 + 15 : 19 * 60 + 45;
+  const base = start ?? (rolled ? 20 * 60 + 15 : DEFAULT_START);
   const fmt = (m: number) => {
     const h24 = Math.floor(m / 60) % 24;
     const suffix = h24 < 12 ? 'AM' : 'PM';
@@ -79,7 +82,12 @@ export const EditorSheet: React.FC<{
     return `${String(h).padStart(2, '0')}:${String(m % 60).padStart(2, '0')} ${suffix}`;
   };
   const wheelStep = duration === 1 ? 5 : 15;
-  const wheel = [fmt(base - 2 * wheelStep), fmt(base - wheelStep), fmt(base + wheelStep), fmt(base + 2 * wheelStep)];
+  const wheelOffsets = [-2 * wheelStep, -wheelStep, wheelStep, 2 * wheelStep];
+  const wheel = wheelOffsets.map((o) => fmt(base + o));
+  const shownSuggestions: Suggestion[] = [
+    ...recent,
+    ...suggestions.filter((s) => !recent.some((r) => r.title === s.title)),
+  ].map((s) => ({ ...s, range: s.followsStart && (base !== DEFAULT_START || !s.range) ? formatSuggestionRange(base, s.duration) : s.range }));
   const fmtShort = (m: number) => fmt(m).slice(0, 5);
   const pillLabel = duration === 1 ? fmt(base) : `${fmtShort(base)} - ${fmt(base + duration)}`;
   const selectedIndex = Math.max(0, durationPresets.indexOf(duration));
@@ -129,6 +137,7 @@ export const EditorSheet: React.FC<{
           fontSize: 23,
           fontFamily: fontFamily.header,
           lineHeight: TITLE.h,
+          letterSpacing: editing ? 0.14 : 0,
           color: INK,
         }}
       />
@@ -199,7 +208,7 @@ export const EditorSheet: React.FC<{
           >
             What?
           </Text>
-          {suggestions.map((s, i) => {
+          {shownSuggestions.map((s, i) => {
             const Icon = SUGGESTION_ICONS[s.icon];
             const top = CARD.firstTop + i * CARD.pitch;
             return (
@@ -207,7 +216,7 @@ export const EditorSheet: React.FC<{
                 key={s.title}
                 accessibilityRole="button"
                 accessibilityLabel={s.title}
-                onPress={() => onPickSuggestion(s.title)}
+                onPress={() => onPickSuggestion(s.title, s.duration)}
                 style={{
                   position: 'absolute', left: CARD.left, top, width: CARD.w, height: CARD.h,
                   backgroundColor: '#FFFFFF',
@@ -217,7 +226,7 @@ export const EditorSheet: React.FC<{
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={SUGGESTION_KEYS[s.icon]}
-                  onPress={() => onPickSuggestion(s.title)}
+                  onPress={() => onPickSuggestion(s.title, s.duration)}
                   style={{ position: 'absolute', left: 32.02 - CARD.left, top: 16.73, width: 24.02, height: 24.02 }}
                 >
                   <Icon size={24} color={colors.accent} />
@@ -268,15 +277,21 @@ export const EditorSheet: React.FC<{
             { y: 328.59, c: WHEEL },
             { y: 368.62, c: FADED },
           ].map((t, i) => (
-            <Text
+            <Pressable
               key={t.y}
-              style={{
-                position: 'absolute', left: 160.47, top: t.y, width: 73.14, height: 22.2,
-                fontSize: 16.8, fontFamily: fontFamily.number, lineHeight: 22.2, color: t.c, textAlign: 'center',
-              }}
+              accessible={false}
+              onPress={() => onStart?.(base + wheelOffsets[i])}
+              style={{ position: 'absolute', left: 160.47, top: t.y, width: 73.14, height: 22.2 }}
             >
-              {wheel[i]}
-            </Text>
+              <Text
+                style={{
+                  position: 'absolute', left: 0, top: 0, width: 73.14, height: 22.2,
+                  fontSize: 16.8, fontFamily: fontFamily.number, lineHeight: 22.2, color: t.c, textAlign: 'center',
+                }}
+              >
+                {wheel[i]}
+              </Text>
+            </Pressable>
           ))}
           <View pointerEvents="none" style={{ position: 'absolute', left: 66.59, top: 274.37, width: 259.82, height: 45.12, borderRadius: 8, backgroundColor: colors.accent }} />
           <Text

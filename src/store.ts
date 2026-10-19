@@ -79,12 +79,42 @@ const eveningWalk = t('grocery', 'Evening walk', '08:15 - 08:30 PM (15m)', 20 * 
 });
 export const s10Tasks: Task[] = [...s7Tasks, eveningWalk];
 
-export const suggestions: { title: string; range: string; icon: 'at' | 'tv' | 'people' | 'run' }[] = [
-  { title: 'Answer Emails', range: '07:45 PM - 08:00 PM (15m)', icon: 'at' },
-  { title: 'Watch a Movie', range: '07:45 PM - 09:15 PM (90m)', icon: 'tv' },
-  { title: 'Meet with Friends', range: '07:00 PM - 07:10 PM (10m)', icon: 'people' },
-  { title: 'Go for a Run!', range: '07:45 PM - 08:30 PM (45m)', icon: 'run' },
+export type Suggestion = {
+  title: string;
+  range: string;
+  icon: 'at' | 'tv' | 'people' | 'run';
+  duration: number;
+  followsStart: boolean;
+};
+
+export const suggestions: Suggestion[] = [
+  { title: 'Answer Emails', range: '07:45 PM - 08:00 PM (15m)', icon: 'at', duration: 15, followsStart: true },
+  { title: 'Watch a Movie', range: '07:45 PM - 09:15 PM (90m)', icon: 'tv', duration: 90, followsStart: true },
+  { title: 'Meet with Friends', range: '07:00 PM - 07:10 PM (10m)', icon: 'people', duration: 10, followsStart: false },
+  { title: 'Go for a Run!', range: '07:45 PM - 08:30 PM (45m)', icon: 'run', duration: 45, followsStart: true },
 ];
+
+export const DEFAULT_START = 19 * 60 + 45;
+
+export const nextFreeStart = (tasks: Task[]): number => {
+  const ends = tasks.filter((x) => x.icon === 'at' && x.start !== null).map((x) => (x.start as number) + x.duration);
+  return ends.length ? Math.max(...ends) : DEFAULT_START;
+};
+
+export const formatSuggestionRange = (start: number, duration: number): string =>
+  `${formatClock(start)} - ${formatClock(start + duration)} (${duration}m)`;
+
+export const recentSuggestions = (tasks: Task[]): Suggestion[] => {
+  const seen = new Set<string>();
+  const out: Suggestion[] = [];
+  for (const x of [...tasks].reverse()) {
+    if (x.icon !== 'at' || seen.has(x.title)) continue;
+    seen.add(x.title);
+    out.push({ title: x.title, range: '', icon: 'at', duration: x.duration, followsStart: true });
+    if (out.length === 3) break;
+  }
+  return out;
+};
 
 export const titlePlaceholder = 'Answer Emails';
 

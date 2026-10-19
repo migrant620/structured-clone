@@ -74,8 +74,8 @@ export const space = {
     badge: 8,
     badgeDisc: 13.82,
     glyph: 7.2,
-    columnPitch: 53.82,
-    firstColumnLeft: 8,
+    columnPitch: 53.855,
+    firstColumnLeft: 8.01,
   },
   nav: {
     iconTop: 723.64,

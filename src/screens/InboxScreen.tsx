@@ -5,7 +5,7 @@ import { colors, fontFamily, frame, type } from '../theme/tokens';
 
 export const InboxScreen: React.FC<{ onNew?: () => void }> = ({ onNew }) => (
   <View style={{ position: 'absolute', left: 0, top: 0, width: frame.width, height: frame.height, backgroundColor: colors.page }}>
-    <Text style={{ position: 'absolute', left: 16.01, top: 17.83, width: 180, ...type.header, color: colors.ink }}>
+    <Text style={{ position: 'absolute', left: 16.01, top: 17.83, width: 180, ...type.header, letterSpacing: 0.2, color: colors.ink }}>
       Inbox
     </Text>
 
@@ -67,7 +67,7 @@ export const InboxScreen: React.FC<{ onNew?: () => void }> = ({ onNew }) => (
         style={{
           position: 'absolute',
           left: 126.63,
-          top: 10.51,
+          top: 11.11,
           width: 136,
           fontSize: 18.1,
           lineHeight: 21.11,
