@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AccessibilityRole, Pressable, Text, View } from 'react-native';
+import { AccessibilityRole, Pressable, ScrollView, Text, View } from 'react-native';
 import { CheckCircleFillIcon, XIcon } from '../icons';
 import { SCRIM } from './DetailSheet';
 import { colors, fontFamily, frame } from '../theme/tokens';
@@ -82,6 +82,8 @@ const FEATURES = [
   'AI-powered Assistant',
 ];
 const FEATURE_TOP = 265.64;
+const PRO_SCROLL_H = 734.91 - 49.45;
+const PRO_CONTENT_H = 665.19 + 3 * 16.38 + 16;
 const FEATURE_PITCH = 26.93;
 
 export const PaywallSheet: React.FC<{ onClose: () => void }> = ({ onClose }) => (
@@ -90,10 +92,15 @@ export const PaywallSheet: React.FC<{ onClose: () => void }> = ({ onClose }) => 
     accessibilityRole={dialogRole}
     style={{ position: 'absolute', left: 0, top: 0, width: frame.width, height: frame.height, zIndex: 50, backgroundColor: colors.page }}
   >
-    <Text style={{ position: 'absolute', left: 16.01, top: 150.65, width: 360.98, fontFamily: fontFamily.header, fontSize: 31, lineHeight: 37.48, color: colors.ink }}>
+    <ScrollView
+      style={{ position: 'absolute', left: 0, top: 0, width: frame.width, height: PRO_SCROLL_H }}
+      contentContainerStyle={{ height: PRO_CONTENT_H }}
+      showsVerticalScrollIndicator={false}
+    >
+    <Text style={{ position: 'absolute', left: 16.01, top: 150.65, width: 360.98, fontFamily: fontFamily.more, fontSize: 32.1, lineHeight: 37.48, color: colors.ink }}>
       Get More Done
     </Text>
-    <Text style={{ position: 'absolute', left: 16.01, top: 196.14, width: 360.98, fontFamily: fontFamily.header, fontSize: 31, lineHeight: 37.48, color: colors.accent }}>
+    <Text style={{ position: 'absolute', left: 16.01, top: 196.14, width: 360.98, fontFamily: fontFamily.more, fontSize: 32.1, lineHeight: 37.48, color: colors.accent }}>
       Structured Pro
     </Text>
     {FEATURES.map((label, i) => (
@@ -104,7 +111,7 @@ export const PaywallSheet: React.FC<{ onClose: () => void }> = ({ onClose }) => 
         <Text
           style={{
             position: 'absolute', left: 58.22, top: FEATURE_TOP + i * FEATURE_PITCH, width: 300,
-            fontFamily: fontFamily.setting, fontSize: 16.6, lineHeight: 18.92, color: colors.ink,
+            fontFamily: fontFamily.setting, fontSize: 17.2, lineHeight: 18.92, color: colors.ink,
           }}
         >
           {label}
@@ -124,12 +131,12 @@ export const PaywallSheet: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       accessibilityLabel="Cancel Anytime"
       style={{ position: 'absolute', left: 134.64, top: 504.71, width: 123.72, height: 40.03, alignItems: 'center', justifyContent: 'center' }}
     >
-      <Text style={{ fontFamily: fontFamily.title, fontSize: 16.6, lineHeight: 20.01, color: colors.accent }}>Cancel Anytime</Text>
+      <Text style={{ fontFamily: fontFamily.chip, fontSize: 14.2, lineHeight: 20.01, color: colors.accent }}>Cancel Anytime</Text>
     </Pressable>
     <Text
       style={{
         position: 'absolute', left: 16.01, top: 572.76, width: 360.98, textAlign: 'center',
-        fontFamily: fontFamily.sub, fontSize: 13.8, lineHeight: 16.38, color: GREY,
+        fontFamily: fontFamily.text, fontSize: 14.5, lineHeight: 16.38, color: GREY,
       }}
     >
       Already purchased on Play Store?
@@ -139,16 +146,17 @@ export const PaywallSheet: React.FC<{ onClose: () => void }> = ({ onClose }) => 
       accessibilityLabel="Restore Purchase"
       style={{ position: 'absolute', left: 128.09, top: 597.14, width: 136.82, height: 40.03, alignItems: 'center', justifyContent: 'center' }}
     >
-      <Text style={{ fontFamily: fontFamily.title, fontSize: 16.6, lineHeight: 20.01, color: colors.accent }}>Restore Purchase</Text>
+      <Text style={{ fontFamily: fontFamily.chip, fontSize: 14.2, lineHeight: 20.01, color: colors.accent }}>Restore Purchase</Text>
     </Pressable>
     <Text
       style={{
         position: 'absolute', left: 16.01, top: 665.19, width: 360.98, textAlign: 'center',
-        fontFamily: fontFamily.sub, fontSize: 8.6, lineHeight: 10.37, color: GREY,
+        fontFamily: fontFamily.text, fontSize: 14.5, lineHeight: 16.38, color: GREY,
       }}
     >
       Have a custom code? Select the payment method in the Google Play purchase screen, then choose Redeem Code.
     </Text>
+    </ScrollView>
     <Pressable
       accessibilityRole="button"
       onPress={onClose}

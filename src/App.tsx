@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View } from 'react-native';
-import { useFonts } from 'expo-font';
+import { FontDisplay, useFonts } from 'expo-font';
 import { BottomNav, Header, NavKey, WeekDay, WeekStrip } from './components/Chrome';
 import { TimelineScreen } from './screens/TimelineScreen';
 import { EditorSheet } from './screens/EditorSheet';
@@ -9,6 +9,7 @@ import { InboxScreen } from './screens/InboxScreen';
 import { AiScreen } from './screens/AiScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { PaywallSheet, WhatsNewSheet } from './screens/ProSheets';
+import { OnboardingFlow } from './screens/Onboarding';
 import { colors, frame, space } from './theme/tokens';
 import {
   DEFAULT_START,
@@ -21,6 +22,7 @@ import {
   s2Tasks,
   s7Tasks,
   s10Tasks,
+  formatClock,
   Task,
 } from './store';
 
@@ -46,6 +48,8 @@ const weekDaysS2: WeekDay[] = [
 ];
 
 
+const FONT_GRACE_MS = 1500;
+
 export type Scenario =
   | 'S1' | 'S2'
   | 'S3' | 'S3b' | 'S4' | 'S5'
@@ -61,24 +65,32 @@ const readScenario = (): Scenario => {
   return all.includes(p as Scenario) ? (p as Scenario) : 'S1';
 };
 
+const readWelcome = (): boolean =>
+  typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('p') === 'welcome';
+
 const TIMELINE_SCENARIOS: Scenario[] = ['S1', 'S2', 'S6', 'S7', 'S10'];
 const SHEET_SCENARIOS: Scenario[] = ['S1', 'S2', 'S6', 'S7', 'S10'];
 
 export default React.memo(function App() {
-  const [fontsLoaded] = useFonts({
-    RobotoText: require('../assets/fonts/RobotoText.ttf'),
-    RobotoGutter: require('../assets/fonts/RobotoGutter.ttf'),
-    RobotoNow: require('../assets/fonts/RobotoNow.ttf'),
-    RobotoNote: require('../assets/fonts/RobotoNote.ttf'),
-    RobotoNumber: require('../assets/fonts/RobotoNumber.ttf'),
-    RobotoTitle: require('../assets/fonts/RobotoTitle.ttf'),
-    RobotoHeader: require('../assets/fonts/RobotoHeader.ttf'),
-    RobotoSub: require('../assets/fonts/RobotoSub.ttf'),
-    RobotoAction: require('../assets/fonts/RobotoAction.ttf'),
-    RobotoSetting: require('../assets/fonts/RobotoSetting.ttf'),
-    RobotoChip: require('../assets/fonts/RobotoChip.ttf'),
-    RobotoMore: require('../assets/fonts/RobotoMore.ttf'),
+  const [fontsLoaded, fontError] = useFonts({
+    RobotoText: { uri: require('../assets/fonts/RobotoText.ttf'), display: FontDisplay.SWAP },
+    RobotoGutter: { uri: require('../assets/fonts/RobotoGutter.ttf'), display: FontDisplay.SWAP },
+    RobotoNow: { uri: require('../assets/fonts/RobotoNow.ttf'), display: FontDisplay.SWAP },
+    RobotoNote: { uri: require('../assets/fonts/RobotoNote.ttf'), display: FontDisplay.SWAP },
+    RobotoNumber: { uri: require('../assets/fonts/RobotoNumber.ttf'), display: FontDisplay.SWAP },
+    RobotoTitle: { uri: require('../assets/fonts/RobotoTitle.ttf'), display: FontDisplay.SWAP },
+    RobotoHeader: { uri: require('../assets/fonts/RobotoHeader.ttf'), display: FontDisplay.SWAP },
+    RobotoSub: { uri: require('../assets/fonts/RobotoSub.ttf'), display: FontDisplay.SWAP },
+    RobotoAction: { uri: require('../assets/fonts/RobotoAction.ttf'), display: FontDisplay.SWAP },
+    RobotoSetting: { uri: require('../assets/fonts/RobotoSetting.ttf'), display: FontDisplay.SWAP },
+    RobotoChip: { uri: require('../assets/fonts/RobotoChip.ttf'), display: FontDisplay.SWAP },
+    RobotoMore: { uri: require('../assets/fonts/RobotoMore.ttf'), display: FontDisplay.SWAP },
   });
+  const [graceOver, setGraceOver] = React.useState(false);
+  React.useEffect(() => {
+    const id = setTimeout(() => setGraceOver(true), FONT_GRACE_MS);
+    return () => clearTimeout(id);
+  }, []);
 
   const [scenario] = React.useState<Scenario>(readScenario);
   const seed: Task[] =
@@ -108,6 +120,19 @@ export default React.memo(function App() {
     }
   });
   const [proSurface, setProSurface] = React.useState<null | 'news' | 'paywall'>(null);
+  const [onboarding, setOnboarding] = React.useState<null | 'full' | 'notify'>(() => (readWelcome() ? 'full' : null));
+  const finishOnboarding = React.useCallback(
+    (wake: number | null) => {
+      const full = onboarding === 'full';
+      setOnboarding(null);
+      if (!full) return;
+      if (wake !== null) {
+        setTasks((s) => s.map((t) => (t.id === 'rise' ? { ...t, start: wake, sub: formatClock(wake) } : t)));
+      }
+      setProSurface('paywall');
+    },
+    [onboarding]
+  );
   const [openId, setOpenId] = React.useState<string | null>(
     scenario === 'S6' || scenario === 'S7' ? 'teamSync' : null
   );
@@ -158,7 +183,7 @@ export default React.memo(function App() {
     if (editor === null) setEditor({ mode: 'new', step: 1, title: '', duration: 15, start: nextFreeStart(tasks) });
   }, [editor, tasks]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded && !fontError && !graceOver) {
     return <View style={{ width: frame.width, height: frame.height, backgroundColor: colors.page }} />;
   }
 
@@ -205,7 +230,11 @@ export default React.memo(function App() {
         {tab === 'inbox' ? <InboxScreen onNew={onFab} /> : null}
         {tab === 'ai' ? <AiScreen onNew={onFab} /> : null}
         {tab === 'settings' ? (
-          <SettingsScreen onPro={() => setProSurface('paywall')} onGoogleCalendar={() => setProSurface('news')} />
+          <SettingsScreen
+            onPro={() => setProSurface('paywall')}
+            onGoogleCalendar={() => setProSurface('news')}
+            onNotifications={() => setOnboarding('notify')}
+          />
         ) : null}
       </View>
       <View
@@ -280,6 +309,7 @@ export default React.memo(function App() {
         <WhatsNewSheet onDismiss={() => setProSurface(null)} onLearnMore={() => setProSurface('paywall')} />
       ) : null}
       {proSurface === 'paywall' ? <PaywallSheet onClose={() => setProSurface(null)} /> : null}
+      {onboarding ? <OnboardingFlow only={onboarding === 'notify' ? 'notify' : undefined} onDone={finishOnboarding} /> : null}
     </View>
   );
 });

@@ -81,7 +81,11 @@ const GroupCard: React.FC<{ top: number; h: number }> = ({ top, h }) => (
   <View style={{ position: 'absolute', left: 16.01, top, width: 360.73, height: h, borderRadius: 8, backgroundColor: colors.sheet }} />
 );
 
-export const SettingsScreen: React.FC<{ onPro?: () => void; onGoogleCalendar?: () => void }> = ({ onPro, onGoogleCalendar }) => (
+export const SettingsScreen: React.FC<{ onPro?: () => void; onGoogleCalendar?: () => void; onNotifications?: () => void }> = ({
+  onPro,
+  onGoogleCalendar,
+  onNotifications,
+}) => (
   <View style={{ position: 'absolute', left: 0, top: 0, width: frame.width, height: frame.height, backgroundColor: colors.page }}>
     <Text style={{ position: 'absolute', left: 16.01, top: 17.83, width: 180, ...type.header, color: colors.ink }}>
       Settings
@@ -122,7 +126,7 @@ export const SettingsScreen: React.FC<{ onPro?: () => void; onGoogleCalendar?: (
     <Tile top={336.77} bg="#91BF6C">
       <BellSquareIcon size={26} color="#fff" />
     </Tile>
-    <Row title="Notifications & Alerts" rowTop={334.28} value="Off" divider />
+    <Row title="Notifications & Alerts" rowTop={334.28} value="Off" divider onPress={onNotifications} />
     <Tile top={390.99} bg="#91BF6C">
       <BrushIcon size={26} color="#fff" />
     </Tile>
