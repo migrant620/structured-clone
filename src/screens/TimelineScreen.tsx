@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { PanResponder, Platform, Pressable, Text, View } from 'react-native';
 import { TwoToneRun } from '../components/TwoToneRun';
 import { AlarmIcon, AtIcon, CheckCircleFillIcon, CheckSquareIcon, ChecklistIcon, GearIcon, NotesIcon, PlusCircleIcon, PlusIcon, RecurringIcon, TimerIcon, TrayIcon } from '../icons';
-import { colors, space, type } from '../theme/tokens';
+import { colors, frame, space, type } from '../theme/tokens';
 import { formatClock, Task } from '../store';
 
 type RowLayout = {
@@ -672,6 +672,41 @@ export const TimelineScreen: React.FC<{
   }, [baseLayouts, tasks]);
   const shown = tasks.filter((task) => layouts[task.id]);
   const discs = shown.map((task) => ({ cy: layouts[task.id].discCy, d: layouts[task.id].discD }));
+  const lastBottom = discs.length ? Math.max(...discs.map((d) => d.cy + d.d / 2)) : 0;
+  const contentHeight = Math.max(frame.height, lastBottom + space.navBar.height + 16);
+  const maxOffset = Math.max(0, contentHeight - frame.height);
+  const [offset, setOffset] = React.useState(0);
+  const clamp = React.useCallback((v: number) => Math.min(maxOffset, Math.max(0, v)), [maxOffset]);
+  React.useEffect(() => {
+    setOffset((o) => clamp(o));
+  }, [clamp]);
+  const dragFrom = React.useRef(0);
+  const offsetRef = React.useRef(0);
+  offsetRef.current = offset;
+  const pan = React.useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponderCapture: (_e, g) => maxOffset > 0 && Math.abs(g.dy) > 6 && Math.abs(g.dy) > Math.abs(g.dx),
+        onPanResponderGrant: () => {
+          dragFrom.current = offsetRef.current;
+        },
+        onPanResponderMove: (_e, g) => setOffset(clamp(dragFrom.current - g.dy)),
+      }),
+    [clamp, maxOffset]
+  );
+  const viewportRef = React.useRef<View>(null);
+  React.useEffect(() => {
+    if (Platform.OS !== 'web' || scrolled) return undefined;
+    const node = viewportRef.current as unknown as HTMLElement | null;
+    if (!node || typeof node.addEventListener !== 'function') return undefined;
+    const onWheel = (e: WheelEvent) => {
+      if (maxOffset <= 0) return;
+      e.preventDefault();
+      setOffset((o) => clamp(o + e.deltaY));
+    };
+    node.addEventListener('wheel', onWheel, { passive: false });
+    return () => node.removeEventListener('wheel', onWheel);
+  }, [clamp, maxOffset, scrolled]);
   const body = (
     <View style={{ flex: 1 }}>
       {discs.map((disc, i) => {
@@ -682,7 +717,7 @@ export const TimelineScreen: React.FC<{
           <Connector
             key={i}
             from={disc.cy + disc.d / 2}
-            to={nextLayout ? nextLayout.discCy - nextLayout.discD / 2 : space.nav.iconTop + 2}
+            to={nextLayout ? nextLayout.discCy - nextLayout.discD / 2 : Math.max(space.nav.iconTop + 2, scrolled ? 0 : contentHeight)}
             color={grey ? colors.surfaceMuted : colors.accent}
             solid={!!next && next.icon === 'at'}
           />
@@ -709,9 +744,8 @@ export const TimelineScreen: React.FC<{
       ))}
     </View>
   );
-  return (
-    <View style={{ flex: 1 }}>
-      {body}
+  const firstRunFooter = (
+    <>
       {scenario === 'S1' && !tasks.some((t) => t.id.startsWith('user-')) && (
         <Pressable
           accessibilityRole="button"
@@ -739,6 +773,30 @@ export const TimelineScreen: React.FC<{
           onPress={onAdd}
           style={{ position: 'absolute', left: 128, top: 701.95, width: 84.73, height: 12 }}
         />
+      )}
+    </>
+  );
+  return (
+    <View style={{ flex: 1 }}>
+      {scrolled ? (
+        body
+      ) : (
+        <View
+          ref={viewportRef}
+          {...pan.panHandlers}
+          style={{ position: 'absolute', left: 0, top: space.sheet.top, width: frame.width, height: frame.height - space.sheet.top, overflow: 'hidden' }}
+        >
+          <View
+            pointerEvents="box-none"
+            style={{
+              position: 'absolute', left: 0, top: -space.sheet.top, width: frame.width, height: contentHeight,
+              ...(offset > 0 ? { transform: [{ translateY: -offset }] } : null),
+            }}
+          >
+            {body}
+            {firstRunFooter}
+          </View>
+        </View>
       )}
       <Pressable
         accessibilityRole="button"

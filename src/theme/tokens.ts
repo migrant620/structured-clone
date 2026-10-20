@@ -17,19 +17,21 @@ export const colors = {
   doneInk: '#59595F',
 };
 
+const FALLBACK = 'System';
+
 export const fontFamily = {
-  text: 'RobotoText',
-  gutter: 'RobotoGutter',
-  now: 'RobotoNow',
-  note: 'RobotoNote',
-  number: 'RobotoNumber',
-  title: 'RobotoTitle',
-  header: 'RobotoHeader',
-  sub: 'RobotoSub',
-  action: 'RobotoAction',
-  setting: 'RobotoSetting',
-  chip: 'RobotoChip',
-  more: 'RobotoMore',
+  text: `RobotoText, ${FALLBACK}`,
+  gutter: `RobotoGutter, ${FALLBACK}`,
+  now: `RobotoNow, ${FALLBACK}`,
+  note: `RobotoNote, ${FALLBACK}`,
+  number: `RobotoNumber, ${FALLBACK}`,
+  title: `RobotoTitle, ${FALLBACK}`,
+  header: `RobotoHeader, ${FALLBACK}`,
+  sub: `RobotoSub, ${FALLBACK}`,
+  action: `RobotoAction, ${FALLBACK}`,
+  setting: `RobotoSetting, ${FALLBACK}`,
+  chip: `RobotoChip, ${FALLBACK}`,
+  more: `RobotoMore, ${FALLBACK}`,
 };
 
 export const type = {
