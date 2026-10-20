@@ -1,11 +1,11 @@
 <p align="center">
-  <a href="https://structured-ui.edgeone.cool"><img src="docs/demo.gif" width="280" alt="Planning a task on the Structured day timeline: adding a task through the two-step editor, opening its detail sheet and completing it"></a>
+  <a href="https://migrant620.github.io/structured/"><img src="docs/demo.gif" width="280" alt="Planning a task on the Structured day timeline: adding a task through the two-step editor, opening its detail sheet and completing it"></a>
 </p>
 
 <h1 align="center">Structured UI</h1>
 
 <p align="center">
-  <a href="https://structured-ui.edgeone.cool"><img src="https://img.shields.io/badge/%E2%96%B6%20Live%20demo-structured--ui.edgeone.cool-F49F99?style=for-the-badge" alt="Live demo"></a>
+  <a href="https://migrant620.github.io/structured/"><img src="https://img.shields.io/badge/%E2%96%B6%20Live%20demo-migrant620.github.io%2Fstructured-F49F99?style=for-the-badge" alt="Live demo"></a>
 </p>
 
 <p align="center">
@@ -85,7 +85,7 @@ The static output is written to `dist/`. Serve that directory over HTTP or HTTPS
 
 ## Demo build
 
-The published demo at <https://structured-ui.edgeone.cool> is built from this repository. It was last rebuilt and redeployed on 2026-10-19 (EdgeOne deployment `dpkdn8dl1pi1`, source revision `2953bead`).
+The published demo at <https://migrant620.github.io/structured/> is built from this repository. It was last rebuilt and redeployed on 2026-10-20 (GitHub Pages commit `0dd8495e`, source revision `6e3f3342`).
 
 ## Scope and limitations
 
