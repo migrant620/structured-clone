@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { View } from 'react-native';
-import { FontDisplay, useFonts } from 'expo-font';
 import { BottomNav, Header, NavKey, WeekDay, WeekStrip } from './components/Chrome';
 import { TimelineScreen } from './screens/TimelineScreen';
 import { colors, frame, space } from './theme/tokens';
@@ -68,6 +67,40 @@ const weekDaysS2: WeekDay[] = [
 
 const FONT_GRACE_MS = 1500;
 
+const FACES: Record<string, string> = {
+  RobotoText: require('../assets/fonts/RobotoText.ttf'),
+  RobotoGutter: require('../assets/fonts/RobotoGutter.ttf'),
+  RobotoNow: require('../assets/fonts/RobotoNow.ttf'),
+  RobotoNote: require('../assets/fonts/RobotoNote.ttf'),
+  RobotoNumber: require('../assets/fonts/RobotoNumber.ttf'),
+  RobotoTitle: require('../assets/fonts/RobotoTitle.ttf'),
+  RobotoHeader: require('../assets/fonts/RobotoHeader.ttf'),
+  RobotoSub: require('../assets/fonts/RobotoSub.ttf'),
+  RobotoAction: require('../assets/fonts/RobotoAction.ttf'),
+  RobotoSetting: require('../assets/fonts/RobotoSetting.ttf'),
+  RobotoChip: require('../assets/fonts/RobotoChip.ttf'),
+  RobotoMore: require('../assets/fonts/RobotoMore.ttf'),
+};
+const FIRST_SCREEN_FACES = ['RobotoText', 'RobotoGutter', 'RobotoNow', 'RobotoNote', 'RobotoNumber', 'RobotoTitle', 'RobotoHeader'];
+const installFaces = (): Promise<unknown> | null => {
+  if (typeof document === 'undefined') return null;
+  const style = document.createElement('style');
+  style.textContent = Object.entries(FACES)
+    .map(([family, url]) => `@font-face{font-family:${family};src:url("${url}") format("truetype");font-display:swap;}`)
+    .join('\n');
+  document.head.appendChild(style);
+  if (!document.fonts || typeof document.fonts.load !== 'function') return null;
+  const load = (families: string[]) => Promise.all(families.map((family) => document.fonts.load(`16px ${family}`)));
+  const later = Object.keys(FACES).filter((family) => !FIRST_SCREEN_FACES.includes(family));
+  const rest = () => load(later);
+  const afterLoad = new Promise<void>((resolve) => {
+    if (document.readyState === 'complete') resolve();
+    else window.addEventListener('load', () => resolve(), { once: true });
+  });
+  return afterLoad.then(() => load(FIRST_SCREEN_FACES)).then(rest, rest);
+};
+const facesReady = installFaces();
+
 export type Scenario =
   | 'S1' | 'S2'
   | 'S3' | 'S3b' | 'S4' | 'S5'
@@ -90,20 +123,17 @@ const TIMELINE_SCENARIOS: Scenario[] = ['S1', 'S2', 'S6', 'S7', 'S10'];
 const SHEET_SCENARIOS: Scenario[] = ['S1', 'S2', 'S6', 'S7', 'S10'];
 
 export default React.memo(function App() {
-  const [fontsLoaded, fontError] = useFonts({
-    RobotoText: { uri: require('../assets/fonts/RobotoText.ttf'), display: FontDisplay.SWAP },
-    RobotoGutter: { uri: require('../assets/fonts/RobotoGutter.ttf'), display: FontDisplay.SWAP },
-    RobotoNow: { uri: require('../assets/fonts/RobotoNow.ttf'), display: FontDisplay.SWAP },
-    RobotoNote: { uri: require('../assets/fonts/RobotoNote.ttf'), display: FontDisplay.SWAP },
-    RobotoNumber: { uri: require('../assets/fonts/RobotoNumber.ttf'), display: FontDisplay.SWAP },
-    RobotoTitle: { uri: require('../assets/fonts/RobotoTitle.ttf'), display: FontDisplay.SWAP },
-    RobotoHeader: { uri: require('../assets/fonts/RobotoHeader.ttf'), display: FontDisplay.SWAP },
-    RobotoSub: { uri: require('../assets/fonts/RobotoSub.ttf'), display: FontDisplay.SWAP },
-    RobotoAction: { uri: require('../assets/fonts/RobotoAction.ttf'), display: FontDisplay.SWAP },
-    RobotoSetting: { uri: require('../assets/fonts/RobotoSetting.ttf'), display: FontDisplay.SWAP },
-    RobotoChip: { uri: require('../assets/fonts/RobotoChip.ttf'), display: FontDisplay.SWAP },
-    RobotoMore: { uri: require('../assets/fonts/RobotoMore.ttf'), display: FontDisplay.SWAP },
-  });
+  const [fontsLoaded, setFontsLoaded] = React.useState(facesReady === null);
+  React.useEffect(() => {
+    let live = true;
+    const done = () => {
+      if (live) setFontsLoaded(true);
+    };
+    facesReady?.then(done, done);
+    return () => {
+      live = false;
+    };
+  }, []);
   const [graceOver, setGraceOver] = React.useState(false);
   React.useEffect(() => {
     const id = setTimeout(() => setGraceOver(true), FONT_GRACE_MS);
@@ -124,8 +154,8 @@ export default React.memo(function App() {
   const [selectedDay, setSelectedDay] = React.useState(scenario === 'S2' || scenario === 'S6' || scenario === 'S7' ? 1 : 0);
   const [editor, setEditor] = React.useState<
     | null
-    | { mode: 'new'; step: 1 | 2; title: string; duration: number; start: number }
-    | { mode: 'edit'; step: 2; title: string; duration: number; start: number }
+    | { mode: 'new'; step: 1 | 2; title: string; duration: number; start: number; colour?: string }
+    | { mode: 'edit'; step: 2; title: string; duration: number; start: number; colour?: string }
   >(() => {
     switch (scenario) {
       case 'S3': return { mode: 'new', step: 1, title: '', duration: 15, start: DEFAULT_START };
@@ -176,7 +206,7 @@ export default React.memo(function App() {
     setOpenId(null);
     setConfirmId(null);
   }, []);
-  const commitTask = React.useCallback((title: string, duration: number, start: number) => {
+  const commitTask = React.useCallback((title: string, duration: number, start: number, colour?: string) => {
     const range = formatRange(start, duration);
     const task: Task = {
       id: `user-${Date.now()}`,
@@ -192,17 +222,18 @@ export default React.memo(function App() {
       note: '',
       rangeLabel: range,
       noteAccent: [86.8, 105.5],
+      ...(colour ? { colour } : null),
     };
     setTasks((s) => [...s, task]);
     setEditor(null);
   }, []);
 
-  const applyEdit = React.useCallback((id: string, title: string, duration: number, start: number) => {
+  const applyEdit = React.useCallback((id: string, title: string, duration: number, start: number, colour?: string) => {
     setTasks((s) =>
       s.map((t) => {
         if (t.id !== id) return t;
         const range = formatRange(start, duration);
-        return { ...t, title: title || t.title, start, duration, sub: range, rangeLabel: range };
+        return { ...t, title: title || t.title, start, duration, sub: range, rangeLabel: range, ...(colour ? { colour } : null) };
       })
     );
   }, []);
@@ -234,7 +265,7 @@ export default React.memo(function App() {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
-  if (!fontsLoaded && !fontError && !graceOver) {
+  if (!fontsLoaded && !graceOver) {
     return <View style={{ width: frame.width, height: frame.height, backgroundColor: colors.page }} />;
   }
 
@@ -314,6 +345,7 @@ export default React.memo(function App() {
           title={openTaskObj.title}
           range={`9/28/26, ${openTaskObj.rangeLabel ?? openTaskObj.sub}`}
           done={openTaskObj.done}
+          tint={openTaskObj.colour}
           onToggleDone={() => toggleDone(openTaskObj.id)}
           onDelete={() => {
             setConfirmId(openTaskObj.id);
@@ -327,6 +359,7 @@ export default React.memo(function App() {
               title: openTaskObj.title,
               duration: openTaskObj.duration,
               start: openTaskObj.start ?? DEFAULT_START,
+              colour: openTaskObj.colour,
             })
           }
           onClose={() => setOpenId(null)}
@@ -352,13 +385,15 @@ export default React.memo(function App() {
           }
           onDuration={(minutes: number) => setEditor((e) => (e ? { ...e, duration: minutes } : e))}
           onStart={(minutes: number) => setEditor((e) => (e ? { ...e, start: minutes } : e))}
+          colour={editor.colour}
+          onColour={(colour: string) => setEditor((e) => (e ? { ...e, colour } : e))}
           onCommit={() => {
             if (editor.step === 1) setEditor({ ...editor, step: 2 });
             else if (editor.mode === 'edit') {
-              if (openId) applyEdit(openId, editor.title, editor.duration, editor.start);
+              if (openId) applyEdit(openId, editor.title, editor.duration, editor.start, editor.colour);
               setOpenId(null);
               setEditor(null);
-            } else commitTask(editor.title || 'Answer Emails', editor.duration, editor.start);
+            } else commitTask(editor.title || 'Answer Emails', editor.duration, editor.start, editor.colour);
           }}
           onClose={() => setEditor(null)}
         />

@@ -3,7 +3,7 @@ import { AccessibilityRole, Pressable, Text, TextInput, View } from 'react-nativ
 import { TwoToneRun } from '../components/TwoToneRun';
 import { AtIcon, CalendarSmallIcon, RunIcon, TvIcon, Person2Icon, XIcon } from '../icons';
 import { colors, fontFamily } from '../theme/tokens';
-import { DEFAULT_START, durationPresets, formatSuggestionRange, Suggestion, suggestions, titlePlaceholder } from '../store';
+import { DEFAULT_START, durationPresets, formatSuggestionRange, Suggestion, suggestions, TASK_COLOURS, titlePlaceholder } from '../store';
 
 const PAGE = colors.page;
 const INK = colors.ink;
@@ -66,9 +66,11 @@ export const EditorSheet: React.FC<{
   onPickSuggestion: (title: string, duration: number) => void;
   onDuration?: (minutes: number) => void;
   onStart?: (minutes: number) => void;
+  colour?: string;
+  onColour?: (colour: string) => void;
   onCommit: () => void;
   onClose: () => void;
-}> = ({ mode, step, title, duration, rolled = false, start, recent = [], onTitle, onPickSuggestion, onDuration, onStart, onCommit, onClose }) => {
+}> = ({ mode, step, title, duration, rolled = false, start, recent = [], onTitle, onPickSuggestion, onDuration, onStart, colour, onColour, onCommit, onClose }) => {
   const editing = mode === 'edit';
   const [typing, setTyping] = React.useState(false);
   React.useEffect(() => {
@@ -95,6 +97,34 @@ export const EditorSheet: React.FC<{
   };
   const wheelStep = duration === 1 ? 5 : 15;
   const wheelOffsets = [-2 * wheelStep, -wheelStep, wheelStep, 2 * wheelStep];
+  const rootRef = React.useRef<View>(null);
+  const stepRef = React.useRef<(dir: number) => void>(() => undefined);
+  stepRef.current = (dir: number) => onStart?.(base + dir * wheelStep);
+  React.useEffect(() => {
+    if (step !== 2 || typeof document === 'undefined') return undefined;
+    const node = rootRef.current as unknown as HTMLElement | null;
+    const onWheel = (e: WheelEvent) => {
+      if (!node || typeof node.getBoundingClientRect !== 'function' || e.deltaY === 0) return;
+      const r = node.getBoundingClientRect();
+      const y = ((e.clientY - r.top) / r.height) * 777.45;
+      if (y < 196 || y > 400) return;
+      e.preventDefault();
+      stepRef.current(e.deltaY > 0 ? 1 : -1);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+      e.preventDefault();
+      stepRef.current(e.key === 'ArrowDown' ? 1 : -1);
+    };
+    node?.addEventListener('wheel', onWheel, { passive: false });
+    document.addEventListener('keydown', onKey);
+    return () => {
+      node?.removeEventListener('wheel', onWheel);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [step]);
   const wheel = wheelOffsets.map((o) => fmt(base + o));
   const shownSuggestions: Suggestion[] = [
     ...recent,
@@ -108,10 +138,12 @@ export const EditorSheet: React.FC<{
   const unitLabel = DURATION_SEGMENTS[selectedIndex].unit;
   const unitBox = DURATION_SEGMENTS[selectedIndex].box ?? { left: segLefts[selectedIndex], w: segWidths[selectedIndex] };
   const pillLeft = unitBox.left + unitBox.w / 2 - PILL_W / 2;
-  const discColours = ['#F79970', '#E3A500', '#8CB969', '#5E81A3', '#218161', '#924564', '#2B4E6F', '#080808'];
+  const selectedColour = Math.max(0, TASK_COLOURS.indexOf((colour ?? TASK_COLOURS[0]) as (typeof TASK_COLOURS)[number]));
+  const tint = TASK_COLOURS[selectedColour];
 
   return (
     <View
+      ref={rootRef}
       aria-modal
       accessibilityRole={"dialog" as unknown as AccessibilityRole}
       style={{ position: 'absolute', left: 0, top: 0, width: 392.73, height: 777.45, backgroundColor: PAGE, zIndex: 40 }}
@@ -166,7 +198,7 @@ export const EditorSheet: React.FC<{
           accessibilityLabel="at"
           style={{ position: 'absolute', left: (TILE_W - 24.02) / 2, top: (TILE_W - 24.02) / 2, width: 24.02, height: 24.02 }}
         >
-          <AtIcon width={24} height={24} color={colors.accent} />
+          <AtIcon width={24} height={24} color={tint} />
         </Pressable>
       </Pressable>
       {title || typing ? (
@@ -458,32 +490,18 @@ export const EditorSheet: React.FC<{
             More...
           </Text>
           <View pointerEvents="none" style={{ position: 'absolute', left: SWATCH.left, top: SWATCH.top, width: SWATCH.w, height: SWATCH.h, borderRadius: 16, backgroundColor: '#FFFFFF' }} />
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              left: DISC.firstCx - DISC.d / 2,
-              top: DISC.cy - DISC.d / 2,
-              width: DISC.d,
-              height: DISC.d,
-              borderRadius: DISC.d / 2,
-              backgroundColor: '#FFFFFF',
-              borderWidth: 2.5,
-              borderColor: colors.accent,
-            }}
-          />
-          {discColours.map((c, i) => (
+          {TASK_COLOURS.map((c, i) => (
             <View
               key={c}
               pointerEvents="none"
               style={{
                 position: 'absolute',
-                left: DISC.firstCx + (i + 1) * DISC.pitch - DISC.d / 2,
+                left: DISC.firstCx + i * DISC.pitch - DISC.d / 2,
                 top: DISC.cy - DISC.d / 2,
                 width: DISC.d,
                 height: DISC.d,
                 borderRadius: DISC.d / 2,
-                backgroundColor: c,
+                ...(i === selectedColour ? { backgroundColor: '#FFFFFF', borderWidth: 2.5, borderColor: c } : { backgroundColor: c }),
               }}
             />
           ))}
@@ -491,11 +509,17 @@ export const EditorSheet: React.FC<{
             <Pressable
               key={i}
               accessibilityRole="button"
+              accessibilityState={{ selected: i === selectedColour }}
+              aria-selected={i === selectedColour}
+              onPress={() => onColour?.(TASK_COLOURS[i])}
               style={{ position: 'absolute', left: 22.2 + i * 40.03, top: 697.21, width: 40.03, height: 13.1 }}
             />
           ))}
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{ selected: selectedColour === 8 }}
+            aria-selected={selectedColour === 8}
+            onPress={() => onColour?.(TASK_COLOURS[8])}
             style={{ position: 'absolute', left: 342.42, top: 697.21, width: 48.03, height: 48.03 }}
           />
           <CommitButton

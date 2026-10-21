@@ -3,7 +3,7 @@ import { PanResponder, Platform, Pressable, Text, View } from 'react-native';
 import { TwoToneRun } from '../components/TwoToneRun';
 import { AlarmIcon, AtIcon, CheckCircleFillIcon, CheckSquareIcon, ChecklistIcon, GearIcon, HourglassIcon, NotesIcon, PlusCircleIcon, PlusIcon, RecurringIcon, TimerIcon, TrayIcon } from '../icons';
 import { colors, frame, space, type } from '../theme/tokens';
-import { formatClock, planningHint, Task } from '../store';
+import { FIRST_RUN_PLAN_END, formatClock, gapHintParts, planningHint, Task } from '../store';
 
 type RowLayout = {
   subTop: number;
@@ -23,7 +23,12 @@ type RowLayout = {
   ringH?: number;
   compact?: boolean;
   glyphDy?: number;
+  discH?: number;
 };
+
+const GAP_HINT_H = 77.8;
+const CAPSULE_H = 85.5;
+const BODY_GAP = 11.6;
 
 export const rowLayout: Record<string, RowLayout> = {
   rise: {
@@ -124,7 +129,9 @@ const Disc: React.FC<{
   onOpen: () => void;
   glyphBox?: { w: number; h: number };
   glyphDy?: number;
-}> = ({ icon, scheduled, done = false, d, cy, onOpen, glyphBox = { w: GLYPH_BOX, h: GLYPH_BOX }, glyphDy = 0 }) => {
+  h?: number;
+  tint?: string;
+}> = ({ icon, scheduled, done = false, d, cy, onOpen, glyphBox = { w: GLYPH_BOX, h: GLYPH_BOX }, glyphDy = 0, h = d, tint = colors.accent }) => {
   const layerFor = (): { w: number; h: number } => {
     if (icon === 'alarm') return { w: inner, h: inner };
     if (icon === 'at') return glyphBox;
@@ -138,13 +145,13 @@ const Disc: React.FC<{
       case 'checklist':
         return <ChecklistIcon size={GLYPH_SIZE} color={colors.accent} />;
       case 'plusCircle':
-        return <PlusCircleIcon size={PLUS_SIZE} color={colors.accent} bg="#fff" />;
+        return <PlusCircleIcon size={PLUS_SIZE} color={colors.accent} bg={colors.surfaceMuted} />;
       case 'tray':
-        return <TrayIcon size={GLYPH_SIZE} color={colors.accent} />;
+        return <TrayIcon size={GLYPH_SIZE} color={colors.accent} bg={colors.surfaceMuted} />;
       case 'gear':
         return <GearIcon size={GLYPH_SIZE} color={colors.accent} bg={colors.surfaceMuted} />;
       case 'at':
-        return <AtIcon width={20} height={20} color={colors.accent} />;
+        return <AtIcon width={20} height={20} color={tint} />;
     }
   })();
   const layer = layerFor();
@@ -153,9 +160,9 @@ const Disc: React.FC<{
       style={{
         position: 'absolute',
         left: space.disc.cx - d / 2,
-        top: cy - d / 2,
+        top: cy - h / 2,
         width: d,
-        height: d,
+        height: h,
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -166,7 +173,7 @@ const Disc: React.FC<{
         style={{
           position: 'absolute',
           width: d,
-          height: d,
+          height: h,
           borderRadius: d / 2,
           backgroundColor: scheduled && icon !== 'at' && !done ? colors.accent : colors.surfaceMuted,
         }}
@@ -178,7 +185,7 @@ const Disc: React.FC<{
         style={{
           position: 'absolute',
           left: (d - glyphBox.w) / 2,
-          top: (d - glyphBox.h) / 2 + glyphDy,
+          top: (h - glyphBox.h) / 2 + glyphDy,
           width: glyphBox.w,
           height: glyphBox.h,
           alignItems: 'center',
@@ -292,7 +299,7 @@ const Row: React.FC<{ task: Task; layout: RowLayout; onOpen: (id: string) => voi
   const tall = l.discD >= 70;
   return (
     <View>
-      <Disc icon={task.icon} scheduled={task.scheduled} done={task.done} d={l.discD} cy={l.discCy} onOpen={() => onOpen(task.id)} glyphBox={l.glyphBox} glyphDy={l.glyphDy} />
+      <Disc icon={task.icon} scheduled={task.scheduled} done={task.done} d={l.discD} cy={l.discCy} h={l.discH} tint={task.colour} onOpen={() => onOpen(task.id)} glyphBox={l.glyphBox} glyphDy={l.glyphDy} />
       <Ring cy={l.ringCy ?? l.discCy} h={l.ringH} onToggle={() => (onToggle ? onToggle(task.id) : onOpen(task.id))} done={task.done} />
       <Pressable
         accessibilityRole="button"
@@ -469,12 +476,12 @@ const GUTTER_S2: { top: number; label: string; now?: boolean }[] = [
   { top: 697.2, label: '8:00' },
 ];
 
-const S10_BASE = 52.5;
+const S10_BASE = 58.18;
 export const GUTTER_S10_LABELS: { top: number; label: string; now?: boolean }[] = [
   { top: 188.49 - S10_BASE, label: '8:00' },
   { top: 251.81 - S10_BASE, label: '12:00' },
   { top: 308.58 - S10_BASE, label: '6:45' },
-  { top: 344.6 - S10_BASE, label: '6:48', now: true },
+  { top: 298.19, label: '6:48', now: true },
   { top: 368.62 - S10_BASE, label: '6:50' },
   { top: 398.46 - S10_BASE, label: '7:00' },
   { top: 458.5 - S10_BASE, label: '7:05' },
@@ -537,24 +544,21 @@ export const S10_LAYOUT: Record<string, RowLayout> = {
     subTop: 646.99 - S10_BASE,
     titleTop: 663.37 - S10_BASE,
     titleLineHeight: 10.6,
-    discCy: 665.55 - S10_BASE,
+    discCy: 606.91,
     discD: 60.5,
-    ringCy: 671.5 - S10_BASE,
-    ringH: 32,
-    glyphBox: { w: 26.2, h: 21.5 },
-    glyphDy: 11.25,
+    discH: CAPSULE_H,
+    ringCy: 607.27,
+    ringH: 48,
     compact: true,
   },
   grocery: {
-    subTop: 684.5,
-    titleTop: 700.9,
+    subTop: 646.99 - S10_BASE + 84.36,
+    titleTop: 663.37 - S10_BASE + 84.36,
     titleLineHeight: 10.6,
-    discCy: 703.0,
+    discCy: 691.64,
     discD: 60.5,
-    ringCy: 709.0,
-    ringH: 32,
-    glyphBox: { w: 26.2, h: 21.5 },
-    glyphDy: 11.25,
+    ringCy: 692.0,
+    ringH: 48,
     compact: true,
   },
 };
@@ -663,34 +667,43 @@ export const TimelineScreen: React.FC<{
           ? GUTTER_S7_LABELS
           : GUTTER_S2;
   const baseLayouts = scenario === 'S10' ? S10_LAYOUT : scenario === 'S7' ? S7_LAYOUT : rowLayout;
-  const layouts = React.useMemo(() => {
+  const { layouts, gapHints } = React.useMemo(() => {
     const merged: Record<string, RowLayout> = { ...baseLayouts };
+    const hints: { parts: [string, string, string]; sub: number }[] = [];
     let prev: RowLayout | null = null;
+    let planEnd = FIRST_RUN_PLAN_END;
     for (const task of tasks) {
       if (merged[task.id]) {
         prev = merged[task.id];
+        if (task.icon === 'at' && task.start !== null) planEnd = task.start + task.duration;
         continue;
       }
-      const discCy: number = (prev ? prev.discCy : 620) + 72;
+      const gap = scenario === 'S1' && task.start !== null ? gapHintParts(task.start - planEnd) : null;
+      if (task.start !== null) planEnd = Math.max(planEnd, task.start + task.duration);
+      const discD = 60.5;
+      const discH = task.duration >= 30 ? CAPSULE_H : discD;
+      const prevBottom = prev ? prev.discCy + (prev.discH ?? prev.discD) / 2 : 650.25;
+      const discCy: number = prevBottom + BODY_GAP + discH / 2 + (gap ? GAP_HINT_H : 0);
+      const subTop = discCy - 18.3;
+      if (gap) hints.push({ parts: gap, sub: subTop - GAP_HINT_H });
       const layout: RowLayout = {
-        subTop: discCy - 5,
-        titleTop: discCy + 11.4,
+        subTop,
+        titleTop: subTop + 16.37,
         titleLineHeight: 10.6,
         discCy,
-        discD: 60.5,
-        ringCy: discCy + 6,
-        ringH: 32,
-        glyphBox: { w: 26.2, h: 21.5 },
-        glyphDy: 11.25,
+        discD,
+        ...(discH > discD ? { discH } : null),
+        ringCy: discCy + 0.36,
+        ringH: 48,
         compact: true,
       };
       merged[task.id] = layout;
       prev = layout;
     }
-    return merged;
-  }, [baseLayouts, tasks]);
+    return { layouts: merged, gapHints: hints };
+  }, [baseLayouts, tasks, scenario]);
   const shown = tasks.filter((task) => layouts[task.id]);
-  const discs = shown.map((task) => ({ cy: layouts[task.id].discCy, d: layouts[task.id].discD }));
+  const discs = shown.map((task) => ({ cy: layouts[task.id].discCy, d: layouts[task.id].discH ?? layouts[task.id].discD }));
   const lastBottom = discs.length ? Math.max(...discs.map((d) => d.cy + d.d / 2)) : 0;
   const userRows = shown.filter((task) => task.id.startsWith('user-'));
   const lastUser = userRows.length ? layouts[userRows[userRows.length - 1].id] : null;
@@ -735,14 +748,15 @@ export const TimelineScreen: React.FC<{
       {discs.map((disc, i) => {
         const next = shown[i + 1];
         const nextLayout = next ? layouts[next.id] : null;
-        const grey = !nextLayout || next.icon === 'at';
+        const fromUnscheduled = !shown[i].scheduled;
+        const grey = !nextLayout || next.icon === 'at' || fromUnscheduled;
         return (
           <Connector
             key={i}
             from={disc.cy + disc.d / 2}
-            to={nextLayout ? nextLayout.discCy - nextLayout.discD / 2 : Math.max(space.nav.iconTop + 2, scrolled ? 0 : contentHeight)}
+            to={nextLayout ? nextLayout.discCy - (nextLayout.discH ?? nextLayout.discD) / 2 : Math.max(space.nav.iconTop + 2, scrolled ? 0 : contentHeight)}
             color={grey ? colors.surfaceMuted : colors.accent}
-            solid={!!next && next.icon === 'at'}
+            solid={!!next && (next.icon === 'at' || fromUnscheduled)}
           />
         );
       })}
@@ -800,6 +814,14 @@ export const TimelineScreen: React.FC<{
           style={{ position: 'absolute', left: 128, top: 701.95, width: 84.73, height: 12 }}
         />
       )}
+      {gapHints.map((g) => (
+        <React.Fragment key={`gap-${g.sub}`}>
+          <View pointerEvents="none" style={{ position: 'absolute', left: space.textLeft, top: g.sub + 1.1, width: 14.18, height: 14.18 }}>
+            <TimerIcon size={14.18} color={colors.inkSecondary} />
+          </View>
+          <HintRun parts={g.parts} top={g.sub - 15.3} onPress={onAdd} />
+        </React.Fragment>
+      ))}
       {tail ? (
         <>
           <Pressable
@@ -818,7 +840,13 @@ export const TimelineScreen: React.FC<{
   );
   return (
     <View style={{ flex: 1 }}>
-      {scrolled ? (
+      {scenario === 'S10' ? (
+        <View style={{ position: 'absolute', left: 0, top: space.sheet.top, width: frame.width, height: frame.height - space.sheet.top, overflow: 'hidden' }}>
+          <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, top: -space.sheet.top, width: frame.width, height: frame.height }}>
+            {body}
+          </View>
+        </View>
+      ) : scrolled ? (
         body
       ) : (
         <View
