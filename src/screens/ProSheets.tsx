@@ -2,6 +2,7 @@ import * as React from 'react';
 import { AccessibilityRole, Pressable, ScrollView, Text, View } from 'react-native';
 import { CheckCircleFillIcon, XIcon } from '../icons';
 import { SCRIM } from './DetailSheet';
+import { useDragDismiss } from '../components/dragDismiss';
 import { colors, fontFamily, frame } from '../theme/tokens';
 
 const GREY = '#85858A';
@@ -9,7 +10,9 @@ const dialogRole = 'dialog' as unknown as AccessibilityRole;
 
 const NEWS_TOP = 439.58;
 
-export const WhatsNewSheet: React.FC<{ onDismiss: () => void; onLearnMore: () => void }> = ({ onDismiss, onLearnMore }) => (
+export const WhatsNewSheet: React.FC<{ onDismiss: () => void; onLearnMore: () => void }> = ({ onDismiss, onLearnMore }) => {
+  const { pan, dy } = useDragDismiss(onDismiss);
+  return (
   <View aria-modal accessibilityRole={dialogRole} style={{ position: 'absolute', left: 0, top: 0, width: frame.width, height: frame.height, zIndex: 45 }}>
     <Pressable
       accessibilityRole="button"
@@ -18,6 +21,7 @@ export const WhatsNewSheet: React.FC<{ onDismiss: () => void; onLearnMore: () =>
       style={{ position: 'absolute', left: 0, top: -49.49, width: 393, height: 826.94, backgroundColor: SCRIM }}
     />
     <View
+      {...pan.panHandlers}
       style={{
         position: 'absolute',
         left: 0,
@@ -27,8 +31,14 @@ export const WhatsNewSheet: React.FC<{ onDismiss: () => void; onLearnMore: () =>
         backgroundColor: colors.page,
         borderTopLeftRadius: 22,
         borderTopRightRadius: 22,
+        ...(dy > 0 ? { transform: [{ translateY: dy }] } : null),
       }}
     >
+      <Pressable
+        accessibilityRole="button"
+        onPress={onDismiss}
+        style={{ position: 'absolute', left: 172.36, top: 0, width: 48.0, height: 48.36 }}
+      />
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Drag handle"
@@ -36,6 +46,7 @@ export const WhatsNewSheet: React.FC<{ onDismiss: () => void; onLearnMore: () =>
         style={{ position: 'absolute', left: 180.49, top: 461.77 - NEWS_TOP, width: 32.02, height: 4, borderRadius: 2, backgroundColor: colors.accent }}
       />
       <Text
+        selectable={false}
         style={{
           position: 'absolute', left: 16.01, top: 503.99 - NEWS_TOP, width: 360.98,
           fontFamily: fontFamily.header, fontSize: 20.3, lineHeight: 22.74, color: colors.ink,
@@ -44,6 +55,7 @@ export const WhatsNewSheet: React.FC<{ onDismiss: () => void; onLearnMore: () =>
         Google Calendar and Color Palette are here
       </Text>
       <Text
+        selectable={false}
         style={{
           position: 'absolute', left: 16.01, top: 565.48 - NEWS_TOP, width: 360.98,
           fontFamily: fontFamily.note, fontSize: 15.6, lineHeight: 19.41, color: GREY,
@@ -73,6 +85,8 @@ export const WhatsNewSheet: React.FC<{ onDismiss: () => void; onLearnMore: () =>
     </View>
   </View>
 );
+};
+
 
 const FEATURES = [
   'Plan Recurring Tasks',

@@ -1,4 +1,5 @@
-import { registerRootComponent } from 'expo';
+require('expo/src/Expo.fx');
+import { AppRegistry } from 'react-native';
 import App from './src/App';
 
 const FRAME_W = 392.73;
@@ -34,4 +35,7 @@ if (typeof document !== 'undefined') {
   window.addEventListener('orientationchange', fit);
 }
 
-registerRootComponent(App);
+AppRegistry.registerComponent('main', () => App);
+if (typeof document !== 'undefined') {
+  AppRegistry.runApplication('main', { rootTag: document.getElementById('root') });
+}

@@ -10,6 +10,7 @@ import {
   TrashIcon,
 } from '../icons';
 import { colors, fontFamily, frame, type } from '../theme/tokens';
+import { useDragDismiss } from '../components/dragDismiss';
 
 export const SCRIM = 'rgba(0, 0, 0, 0.322)';
 export const SCRIM_DIALOG = 'rgba(0, 0, 0, 0.6)';
@@ -17,24 +18,27 @@ export const SCRIM_DIALOG = 'rgba(0, 0, 0, 0.6)';
 const SHEET_TOP = 484.34;
 
 
+const CARD_TOP = 623.27;
+const CARD_H = 70.55;
 const ActionCard: React.FC<{
   label: string;
   icon: React.ReactNode;
   left: number;
+  width: number;
   iconLeft: number;
   labelLeft: number;
   labelW: number;
   onPress?: () => void;
-}> = ({ label, icon, left, iconLeft, labelLeft, labelW, onPress }) => (
+}> = ({ label, icon, left, width, iconLeft, labelLeft, labelW, onPress }) => (
   <Pressable
     accessibilityRole="button"
     onPress={onPress}
-    style={{ position: 'absolute', left, top: 626.91 - SHEET_TOP, width: 110, height: 59, borderRadius: 14, backgroundColor: colors.sheet }}
+    style={{ position: 'absolute', left, top: CARD_TOP - SHEET_TOP, width, height: CARD_H, borderRadius: 8, backgroundColor: colors.sheet }}
   >
     <View
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={{ position: 'absolute', left: iconLeft, top: 155.38 - (626.91 - SHEET_TOP), width: 18.19, height: 18.19, alignItems: 'center', justifyContent: 'center' }}
+      style={{ position: 'absolute', left: iconLeft, top: 155.38 - (CARD_TOP - SHEET_TOP), width: 18.19, height: 18.19, alignItems: 'center', justifyContent: 'center' }}
     >
       {icon}
     </View>
@@ -42,7 +46,7 @@ const ActionCard: React.FC<{
       style={{
         position: 'absolute',
         left: labelLeft,
-        top: 34.99,
+        top: 34.99 + (626.91 - CARD_TOP),
         width: labelW,
         height: 16.38,
         fontFamily: fontFamily.action,
@@ -62,12 +66,15 @@ export const DetailSheet: React.FC<{
   title: string;
   range: string;
   done: boolean;
+  tint?: string;
   onToggleDone?: () => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
   onEdit?: () => void;
   onClose?: () => void;
-}> = ({ title, range, done, onToggleDone, onDelete, onDuplicate, onEdit, onClose }) => (
+}> = ({ title, range, done, tint, onToggleDone, onDelete, onDuplicate, onEdit, onClose }) => {
+  const { pan, dy } = useDragDismiss(onClose);
+  return (
   <View
     aria-modal
     accessibilityRole={"dialog" as unknown as AccessibilityRole}
@@ -84,13 +91,20 @@ export const DetailSheet: React.FC<{
       onPress={onClose}
       style={{ position: 'absolute', left: 0, top: -49.45, width: 393, height: 533.78 }}
     />
-    <View style={{ position: 'absolute', left: 0, top: SHEET_TOP, width: frame.width, height: frame.height - SHEET_TOP, backgroundColor: colors.page, borderTopLeftRadius: 22, borderTopRightRadius: 22 }}>
-      <View
+    <View
+      {...pan.panHandlers}
+      style={{
+        position: 'absolute', left: 0, top: SHEET_TOP, width: frame.width, height: frame.height - SHEET_TOP, backgroundColor: colors.page, borderTopLeftRadius: 22, borderTopRightRadius: 22,
+        ...(dy > 0 ? { transform: [{ translateY: dy }] } : null),
+      }}
+    >
+      <Pressable
         accessibilityRole="button"
+        onPress={onClose}
         style={{ position: 'absolute', left: 172.48, top: 0, width: 48.03, height: 48.4, alignItems: 'center', justifyContent: 'center' }}
       >
         <View style={{ width: 32.02, height: 4, borderRadius: 2, backgroundColor: colors.accent }} />
-      </View>
+      </Pressable>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Drag handle"
@@ -102,7 +116,7 @@ export const DetailSheet: React.FC<{
         accessibilityLabel="at"
         style={{ position: 'absolute', left: 16.01, top: 71.32, width: 28.02, height: 28.02, alignItems: 'center', justifyContent: 'center' }}
       >
-        <AtIcon width={23} height={23} color={colors.accent} />
+        <AtIcon width={23} height={23} color={tint ?? colors.accent} />
       </View>
       <Text style={{ position: 'absolute', left: 60.04, top: 64.57, width: 206.32, height: 16.38, fontFamily: fontFamily.sub, fontSize: 13.8, letterSpacing: 0.08, lineHeight: 16.38, color: '#85858A' }}>
         {range}
@@ -125,14 +139,15 @@ export const DetailSheet: React.FC<{
       </Text>
       <View style={{ position: 'absolute', left: 16.01, top: 115, width: 360.73, height: 1, backgroundColor: colors.surfaceMuted }} />
       <View style={{ position: 'absolute', left: 16.01, top: 607 - SHEET_TOP, width: 360.73, height: 1, backgroundColor: colors.detailRule }} />
-      <ActionCard label="Delete" icon={<TrashIcon size={18.19} color={colors.accent} />} left={16.01} iconLeft={45.85} labelLeft={4.0} labelW={101.9} onPress={onDelete} />
-      <ActionCard label="Duplicate" icon={<DuplicateIcon size={18.19} color={colors.accent} />} left={141.37} iconLeft={46.4} labelLeft={4.55} labelW={101.5} onPress={onDuplicate} />
+      <ActionCard label="Delete" icon={<TrashIcon size={18.19} color={colors.accent} />} left={16.0} width={109.82} iconLeft={45.86} labelLeft={4.01} labelW={101.9} onPress={onDelete} />
+      <ActionCard label="Duplicate" icon={<DuplicateIcon size={18.19} color={colors.accent} />} left={141.82} width={109.45} iconLeft={45.95} labelLeft={4.1} labelW={101.5} onPress={onDuplicate} />
       <ActionCard
         label={done ? 'Incomplete' : 'Complete'}
         icon={done ? <IncompleteIcon size={18.19} color={colors.accent} /> : <CheckCircleFillIcon size={18.19} color={colors.accent} />}
-        left={266.73}
-        iconLeft={46.58}
-        labelLeft={4.73}
+        left={267.27}
+        width={109.45}
+        iconLeft={46.04}
+        labelLeft={4.19}
         labelW={101.5}
         onPress={onToggleDone}
       />
@@ -155,6 +170,7 @@ export const DetailSheet: React.FC<{
     </View>
   </View>
 );
+};
 
 export const DeleteDialog: React.FC<{
   onCancel?: () => void;
@@ -174,24 +190,24 @@ export const DeleteDialog: React.FC<{
     <View
       style={{
         position: 'absolute',
-        left: 43.4,
-        top: 353.65,
-        width: 305.9,
-        height: 168.5,
-        borderRadius: 24,
+        left: 40.4,
+        top: 352.95,
+        width: 312.0,
+        height: 170.7,
+        borderRadius: 8,
         backgroundColor: colors.sheet,
       }}
     >
-      <Text style={{ position: 'absolute', left: 21.01, top: 24.18, height: 25.84, fontFamily: fontFamily.number, fontSize: 21.6, letterSpacing: 0.18, lineHeight: 25.84, color: colors.ink }}>
+      <Text style={{ position: 'absolute', left: 24.01, top: 24.88, height: 25.84, fontFamily: fontFamily.number, fontSize: 21.6, letterSpacing: 0.18, lineHeight: 25.84, color: colors.ink }}>
         Delete Task
       </Text>
-      <Text style={{ position: 'absolute', left: 21.01, top: 81.31, width: 263.82, height: 16.38, fontFamily: fontFamily.sub, fontSize: 13.8, letterSpacing: 0.08, lineHeight: 16.38, color: '#85858A' }}>
+      <Text style={{ position: 'absolute', left: 24.01, top: 82.01, width: 263.82, height: 16.38, fontFamily: fontFamily.sub, fontSize: 13.8, letterSpacing: 0.08, lineHeight: 16.38, color: '#85858A' }}>
         Are you sure you want to delete this task?
       </Text>
-      <Pressable accessibilityRole="button" onPress={onCancel} style={{ position: 'absolute', left: 148.1, top: 121.0, width: 96.71, height: 27.4 }}>
+      <Pressable accessibilityRole="button" onPress={onCancel} style={{ position: 'absolute', left: 151.1, top: 121.7, width: 96.71, height: 27.4 }}>
         <Text style={{ position: 'absolute', left: 5.0, top: 8.6, height: 16.38, fontFamily: fontFamily.title, fontSize: 14.5, letterSpacing: -0.17, lineHeight: 16.38, color: colors.inkSecondary }}>Cancel</Text>
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="Delete" onPress={onDelete} style={{ position: 'absolute', left: 223.4, top: 121.0, width: 70, height: 27.4 }}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Delete" onPress={onDelete} style={{ position: 'absolute', left: 226.4, top: 121.7, width: 70, height: 27.4 }}>
         <Text style={{ position: 'absolute', left: 5.0, top: 8.6, height: 16.38, fontFamily: fontFamily.title, fontSize: 14.5, letterSpacing: -0.14, lineHeight: 16.38, color: '#B3261E' }}>Delete</Text>
       </Pressable>
     </View>

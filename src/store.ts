@@ -16,7 +16,10 @@ export type Task = {
   checklist?: { done: number; total: number };
   rangeLabel?: string;
   noteAccent?: [number, number] | null;
+  colour?: string;
 };
+
+export const TASK_COLOURS = ['#F49F99', '#F79970', '#E3A500', '#8CB969', '#5E81A3', '#218161', '#924564', '#2B4E6F', '#080808'] as const;
 
 export const durationPresets = [1, 15, 30, 45, 60, 90];
 
@@ -174,6 +177,10 @@ export const tailHintParts = (tasks: Task[], bedtime: number): [string, string, 
   const free = bedtime - Math.max(...ends);
   return free > 0 ? ['', formatFreeTime(free), ' to pursue passion.'] : null;
 };
+
+export const GAP_HINT_MIN = 15;
+export const gapHintParts = (gap: number): [string, string, string] | null =>
+  gap >= GAP_HINT_MIN ? ['', formatFreeTime(gap), ' for you—enjoy!'] : null;
 
 export const duplicateOf = (task: Task, tasks: Task[], id: string): Task => {
   const start = nextFreeStart(tasks);

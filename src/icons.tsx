@@ -37,17 +37,12 @@ export const PlusCircleIcon: React.FC<IconProps> = ({ size = 24, color = '#F49F9
   </Svg>
 );
 
-export const TrayIcon: React.FC<IconProps> = ({ size = 24, color = '#F49F99' }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Path
-      d="M4.6 4h14.8A2.6 2.6 0 0 1 22 6.6v10.8a2.6 2.6 0 0 1-2.6 2.6H4.6A2.6 2.6 0 0 1 2 17.4V6.6A2.6 2.6 0 0 1 4.6 4z"
-      fill={color}
-    />
-    <Path
-      d="M2 13.2h5.2l1.1 1.9h7.4l1.1-1.9H22v4.2a2.6 2.6 0 0 1-2.6 2.6H4.6A2.6 2.6 0 0 1 2 17.4z"
-      fill="#fff"
-    />
-    <Line x1={6.6} y1={8.6} x2={17.4} y2={8.6} stroke="#fff" strokeWidth={1.9} strokeLinecap="round" />
+export const TrayIcon: React.FC<IconProps> = ({ size = 26.18, color = '#F49F99', bg = '#EBEBEB' }) => (
+  <Svg width={size} height={size} viewBox="0 0 26.18 26.18">
+    <Rect x={3.27} y={2.91} width={20.36} height={20.36} rx={1.8} fill={color} />
+    <Path d="M5.82 5.45H20.73V15.27H16.73Q13.45 19.53 10.18 15.27H5.82Z" fill={bg} />
+    <Rect x={8.0} y={7.27} width={10.91} height={2.2} rx={1.0} fill={color} />
+    <Rect x={8.0} y={10.98} width={10.91} height={2.2} rx={1.0} fill={color} />
   </Svg>
 );
 
@@ -136,14 +131,8 @@ export const NavTimelineIcon: React.FC<IconProps> = ({ size = 24, color = '#F49F
 
 export const NavAiIcon: React.FC<IconProps> = ({ size = 24, color = '#828286' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Path
-      d="M10.4 1.6c.7 4.6 2.6 6.5 7.2 7.2-4.6.7-6.5 2.6-7.2 7.2-.7-4.6-2.6-6.5-7.2-7.2 4.6-.7 6.5-2.6 7.2-7.2z"
-      fill={color}
-    />
-    <Path
-      d="M17.6 13.4c.4 2.6 1.5 3.7 4.1 4.1-2.6.4-3.7 1.5-4.1 4.1-.4-2.6-1.5-3.7-4.1-4.1 2.6-.4 3.7-1.5 4.1-4.1z"
-      fill={color}
-    />
+    <Path d="M10 1.62Q11.3 9.25 18.93 10.55Q11.3 11.85 10 19.48Q8.7 11.85 1.07 10.55Q8.7 9.25 10 1.62Z" stroke={color} strokeWidth={1.45} strokeLinejoin="round" fill="none" />
+    <Path d="M18.6 12.72Q19.3 16.75 23.33 17.45Q19.3 18.15 18.6 22.18Q17.9 18.15 13.87 17.45Q17.9 16.75 18.6 12.72Z" stroke={color} strokeWidth={1.45} strokeLinejoin="round" fill="none" />
   </Svg>
 );
 
@@ -224,19 +213,13 @@ export const RunIcon: React.FC<IconProps> = ({ size = 24, color = '#F49F99' }) =
   </Svg>
 );
 
-export const TrashIcon: React.FC<IconProps> = ({ size = 24, color = '#F49F99' }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Line x1={4.4} y1={6.4} x2={19.6} y2={6.4} stroke={color} strokeWidth={1.9} strokeLinecap="round" />
-    <Line x1={9.4} y1={3.6} x2={14.6} y2={3.6} stroke={color} strokeWidth={1.9} strokeLinecap="round" />
-    <Path
-      d="M6.2 6.4h11.6l-.9 13.2a1.8 1.8 0 0 1-1.8 1.7H8.9a1.8 1.8 0 0 1-1.8-1.7z"
-      stroke={color}
-      strokeWidth={1.9}
-      fill="none"
-      strokeLinejoin="round"
-    />
-    <Line x1={10.2} y1={10} x2={10.2} y2={17.6} stroke={color} strokeWidth={1.9} strokeLinecap="round" />
-    <Line x1={13.8} y1={10} x2={13.8} y2={17.6} stroke={color} strokeWidth={1.9} strokeLinecap="round" />
+export const TrashIcon: React.FC<IconProps> = ({ size = 18.19, color = '#F49F99', bg = '#FFFFFF' }) => (
+  <Svg width={size} height={size} viewBox="0 0 18.19 18.19">
+    <Rect x={6.55} y={1.82} width={5.09} height={1.2} rx={0.3} fill={color} />
+    <Rect x={2.55} y={2.55} width={13.45} height={1.45} rx={0.3} fill={color} />
+    <Path d="M3.27 3.9h11.64v11.36a1.1 1.1 0 0 1-1.1 1.1H4.37a1.1 1.1 0 0 1-1.1-1.1z" fill={color} />
+    <Rect x={6.91} y={5.45} width={1.09} height={7.64} rx={0.5} fill={bg} />
+    <Rect x={10.18} y={5.45} width={1.09} height={7.64} rx={0.5} fill={bg} />
   </Svg>
 );
 
@@ -254,10 +237,12 @@ export const CheckCircleFillIcon: React.FC<IconProps> = ({ size = 24, color = '#
   </Svg>
 );
 
-export const IncompleteIcon: React.FC<IconProps> = ({ size = 24, color = '#F49F99' }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24">
-    <Circle cx={12} cy={12} r={9.2} stroke={color} strokeWidth={2} fill="none" />
-    <Line x1={6} y1={18} x2={18} y2={6} stroke={color} strokeWidth={2} strokeLinecap="round" />
+export const IncompleteIcon: React.FC<IconProps> = ({ size = 18.19, color = '#F49F99', bg = '#FFFFFF' }) => (
+  <Svg width={size} height={size} viewBox="0 0 18.19 18.19">
+    <Circle cx={9.1} cy={9.09} r={7.64} fill={color} />
+    <Path d="M5.4 8.9L7.7 11.3L12.1 6.7" stroke={bg} strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <Line x1={2.1} y1={1.08} x2={16.92} y2={15.88} stroke={bg} strokeWidth={1.3} strokeLinecap="round" />
+    <Line x1={1.2} y1={2.0} x2={16.0} y2={16.8} stroke={color} strokeWidth={1.3} strokeLinecap="round" />
   </Svg>
 );
 
