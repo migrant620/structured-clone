@@ -3,21 +3,17 @@ import { View } from 'react-native';
 import { FontDisplay, useFonts } from 'expo-font';
 import { BottomNav, Header, NavKey, WeekDay, WeekStrip } from './components/Chrome';
 import { TimelineScreen } from './screens/TimelineScreen';
-import { EditorSheet } from './screens/EditorSheet';
-import { DetailSheet, DeleteDialog } from './screens/DetailSheet';
-import { InboxScreen } from './screens/InboxScreen';
-import { AiScreen } from './screens/AiScreen';
-import { SettingsScreen } from './screens/SettingsScreen';
-import { PaywallSheet, WhatsNewSheet } from './screens/ProSheets';
-import { OnboardingFlow } from './screens/Onboarding';
 import { colors, frame, space } from './theme/tokens';
 import {
+  BEDTIME_DEFAULT,
+  duplicateOf,
+  planningHintParts,
+  tailHintParts,
   DEFAULT_START,
   durationPresets,
   formatRange,
   initialTasks,
   nextFreeStart,
-  planningHint,
   recentSuggestions,
   s2Tasks,
   s7Tasks,
@@ -25,6 +21,28 @@ import {
   formatClock,
   Task,
 } from './store';
+
+const loadEditor = () => import('./screens/EditorSheet');
+const loadDetail = () => import('./screens/DetailSheet');
+const loadInbox = () => import('./screens/InboxScreen');
+const loadAi = () => import('./screens/AiScreen');
+const loadSettings = () => import('./screens/SettingsScreen');
+const loadPro = () => import('./screens/ProSheets');
+const loadOnboarding = () => import('./screens/Onboarding');
+const EditorSheet = React.lazy(() => loadEditor().then((m) => ({ default: m.EditorSheet })));
+const DetailSheet = React.lazy(() => loadDetail().then((m) => ({ default: m.DetailSheet })));
+const DeleteDialog = React.lazy(() => loadDetail().then((m) => ({ default: m.DeleteDialog })));
+const InboxScreen = React.lazy(() => loadInbox().then((m) => ({ default: m.InboxScreen })));
+const AiScreen = React.lazy(() => loadAi().then((m) => ({ default: m.AiScreen })));
+const SettingsScreen = React.lazy(() => loadSettings().then((m) => ({ default: m.SettingsScreen })));
+const WhatsNewSheet = React.lazy(() => loadPro().then((m) => ({ default: m.WhatsNewSheet })));
+const PaywallSheet = React.lazy(() => loadPro().then((m) => ({ default: m.PaywallSheet })));
+const OnboardingFlow = React.lazy(() => loadOnboarding().then((m) => ({ default: m.OnboardingFlow })));
+const preloadAll = (): void => {
+  [loadEditor, loadDetail, loadInbox, loadAi, loadSettings, loadPro, loadOnboarding].forEach((load) => {
+    load().catch(() => undefined);
+  });
+};
 
 const weekDays: WeekDay[] = [
   { label: 'Mon', number: '28', marks: ['alarm', 'checklist', 'plus', 'plain'] },
@@ -121,13 +139,16 @@ export default React.memo(function App() {
   });
   const [proSurface, setProSurface] = React.useState<null | 'news' | 'paywall'>(null);
   const [onboarding, setOnboarding] = React.useState<null | 'full' | 'notify'>(() => (readWelcome() ? 'full' : null));
+  const [bedtime, setBedtime] = React.useState(BEDTIME_DEFAULT);
   const finishOnboarding = React.useCallback(
-    (wake: number | null) => {
+    (result: { wake: number; sleep: number } | null) => {
       const full = onboarding === 'full';
       setOnboarding(null);
       if (!full) return;
-      if (wake !== null) {
+      if (result !== null) {
+        const wake = result.wake;
         setTasks((s) => s.map((t) => (t.id === 'rise' ? { ...t, start: wake, sub: formatClock(wake) } : t)));
+        setBedtime(result.sleep);
       }
       setProSurface('paywall');
     },
@@ -139,6 +160,13 @@ export default React.memo(function App() {
   const [confirmId, setConfirmId] = React.useState<string | null>(scenario === 'S10' ? 'grocery' : null);
 
   const openTask = React.useCallback((id: string) => setOpenId(id), []);
+  const duplicateTask = React.useCallback((id: string) => {
+    setTasks((s) => {
+      const src = s.find((t) => t.id === id);
+      return src ? [...s, duplicateOf(src, s, `user-${Date.now()}`)] : s;
+    });
+    setOpenId(null);
+  }, []);
   const toggleDone = React.useCallback((id: string) => {
     setTasks((s) => s.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
   }, []);
@@ -183,6 +211,29 @@ export default React.memo(function App() {
     if (editor === null) setEditor({ mode: 'new', step: 1, title: '', duration: 15, start: nextFreeStart(tasks) });
   }, [editor, tasks]);
 
+  React.useEffect(() => {
+    const id = setTimeout(preloadAll, 0);
+    return () => clearTimeout(id);
+  }, []);
+
+  const escRef = React.useRef<() => boolean>(() => false);
+  escRef.current = () => {
+    if (onboarding) { finishOnboarding(null); return true; }
+    if (proSurface) { setProSurface(null); return true; }
+    if (confirmId) { setConfirmId(null); return true; }
+    if (editor) { setEditor(null); return true; }
+    if (openId) { setOpenId(null); return true; }
+    return false;
+  };
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && escRef.current()) e.preventDefault();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
   if (!fontsLoaded && !fontError && !graceOver) {
     return <View style={{ width: frame.width, height: frame.height, backgroundColor: colors.page }} />;
   }
@@ -190,6 +241,8 @@ export default React.memo(function App() {
   const chromeless = tab === 'inbox' || tab === 'settings' || tab === 'ai';
   const timelineScenario = scenario === 'S10' ? 'S10' : scenario === 'S7' ? 'S7' : scenario === 'S6' ? 'S6' : scenario === 'S2' ? 'S2' : 'S1';
   const openTaskObj = tasks.find((t) => t.id === openId) ?? null;
+  const hintParts = planningHintParts(bedtime);
+  const tailHint = tailHintParts(tasks, bedtime);
 
   return (
     <View style={{ width: frame.width, height: frame.height, backgroundColor: colors.page, overflow: 'hidden' }}>
@@ -220,13 +273,16 @@ export default React.memo(function App() {
         {tab === 'timeline' ? (
           <TimelineScreen
             tasks={tasks}
-            hint={scenario === 'S2' || scenario === 'S6' ? '' : scenario === 'S1' ? planningHint : ''}
+            hint={scenario === 'S1' ? (hintParts ? hintParts.join('') : '') : ''}
+            hintParts={hintParts}
+            tailHint={tailHint}
             onOpen={openTask}
             onAdd={onFab}
             onToggle={toggleDone}
             scenario={timelineScenario}
           />
         ) : null}
+        <React.Suspense fallback={null}>
         {tab === 'inbox' ? <InboxScreen onNew={onFab} /> : null}
         {tab === 'ai' ? <AiScreen onNew={onFab} /> : null}
         {tab === 'settings' ? (
@@ -236,6 +292,7 @@ export default React.memo(function App() {
             onNotifications={() => setOnboarding('notify')}
           />
         ) : null}
+        </React.Suspense>
       </View>
       <View
         pointerEvents="none"
@@ -251,6 +308,7 @@ export default React.memo(function App() {
       />
       <BottomNav active={tab} onSelect={setTab} />
 
+      <React.Suspense fallback={null}>
       {openTaskObj && !editor ? (
         <DetailSheet
           title={openTaskObj.title}
@@ -261,6 +319,7 @@ export default React.memo(function App() {
             setConfirmId(openTaskObj.id);
             setOpenId(null);
           }}
+          onDuplicate={() => duplicateTask(openTaskObj.id)}
           onEdit={() =>
             setEditor({
               mode: 'edit',
@@ -310,6 +369,7 @@ export default React.memo(function App() {
       ) : null}
       {proSurface === 'paywall' ? <PaywallSheet onClose={() => setProSurface(null)} /> : null}
       {onboarding ? <OnboardingFlow only={onboarding === 'notify' ? 'notify' : undefined} onDone={finishOnboarding} /> : null}
+      </React.Suspense>
     </View>
   );
 });
