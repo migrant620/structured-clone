@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { PanResponder, Platform, Pressable, Text, View } from 'react-native';
 import { TwoToneRun } from '../components/TwoToneRun';
-import { AlarmIcon, AtIcon, CheckCircleFillIcon, CheckSquareIcon, ChecklistIcon, GearIcon, NotesIcon, PlusCircleIcon, PlusIcon, RecurringIcon, TimerIcon, TrayIcon } from '../icons';
+import { AlarmIcon, AtIcon, CheckCircleFillIcon, CheckSquareIcon, ChecklistIcon, GearIcon, HourglassIcon, NotesIcon, PlusCircleIcon, PlusIcon, RecurringIcon, TimerIcon, TrayIcon } from '../icons';
 import { colors, frame, space, type } from '../theme/tokens';
-import { formatClock, Task } from '../store';
+import { formatClock, planningHint, Task } from '../store';
 
 type RowLayout = {
   subTop: number;
@@ -405,11 +405,15 @@ const Row: React.FC<{ task: Task; layout: RowLayout; onOpen: (id: string) => voi
       {l.timerTop !== undefined && task.note ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="timer"
+          accessibilityLabel={task.noteAccent === null ? 'hourglass_bottom' : 'timer'}
           onPress={() => onOpen(task.id)}
           style={{ position: 'absolute', left: space.textLeft, top: l.timerTop, width: 14.18, height: 14.18 }}
         >
-          <TimerIcon size={14.18} color={colors.inkSecondary} />
+          {task.noteAccent === null ? (
+            <HourglassIcon size={14.18} color={colors.inkSecondary} />
+          ) : (
+            <TimerIcon size={14.18} color={colors.inkSecondary} />
+          )}
         </Pressable>
       ) : null}
       {l.noteTop !== undefined && task.note ? (
@@ -626,6 +630,19 @@ export const S7_LAYOUT: Record<string, RowLayout> = {
   },
 };
 
+const HintRun: React.FC<{ parts: [string, string, string]; top: number; onPress: () => void }> = ({ parts, top, onPress }) => (
+  <Text
+    accessibilityRole="button"
+    onPress={onPress}
+    numberOfLines={1}
+    style={{ position: 'absolute', left: 146.18, top, width: 240, ...type.note, lineHeight: 48, color: colors.inkSecondary }}
+  >
+    {parts[0]}
+    <Text style={{ color: colors.accent }}>{parts[1]}</Text>
+    {parts[2]}
+  </Text>
+);
+
 export const TimelineScreen: React.FC<{
   tasks: Task[];
   hint: string;
@@ -633,7 +650,9 @@ export const TimelineScreen: React.FC<{
   onAdd: () => void;
   onToggle?: (id: string) => void;
   scenario?: 'S1' | 'S2' | 'S6' | 'S7' | 'S10';
-}> = ({ tasks, hint, onOpen, onAdd, onToggle, scenario = 'S1' }) => {
+  hintParts?: [string, string, string] | null;
+  tailHint?: [string, string, string] | null;
+}> = ({ tasks, hint, onOpen, onAdd, onToggle, scenario = 'S1', hintParts = null, tailHint = null }) => {
   const scrolled = scenario === 'S10' || scenario === 'S7';
   const GUTTER_ACTIVE =
     scenario === 'S1'
@@ -673,7 +692,11 @@ export const TimelineScreen: React.FC<{
   const shown = tasks.filter((task) => layouts[task.id]);
   const discs = shown.map((task) => ({ cy: layouts[task.id].discCy, d: layouts[task.id].discD }));
   const lastBottom = discs.length ? Math.max(...discs.map((d) => d.cy + d.d / 2)) : 0;
-  const contentHeight = Math.max(frame.height, lastBottom + space.navBar.height + 16);
+  const userRows = shown.filter((task) => task.id.startsWith('user-'));
+  const lastUser = userRows.length ? layouts[userRows[userRows.length - 1].id] : null;
+  const tail = scenario === 'S1' && tailHint && lastUser ? { parts: tailHint, sub: lastUser.subTop } : null;
+  const tailBottom = tail ? tail.sub + 111.2 + 13.8 : 0;
+  const contentHeight = Math.max(frame.height, lastBottom + space.navBar.height + 16, tailBottom + space.navBar.height + 4);
   const maxOffset = Math.max(0, contentHeight - frame.height);
   const [offset, setOffset] = React.useState(0);
   const clamp = React.useCallback((v: number) => Math.min(maxOffset, Math.max(0, v)), [maxOffset]);
@@ -756,7 +779,10 @@ export const TimelineScreen: React.FC<{
           <TimerIcon size={14.18} color={colors.inkSecondary} />
         </Pressable>
       )}
-      {scenario === 'S1' && !tasks.some((t) => t.id.startsWith('user-')) && (
+      {scenario === 'S1' && !tasks.some((t) => t.id.startsWith('user-')) && hint !== planningHint && hintParts ? (
+        <HintRun parts={hintParts} top={665.45} onPress={onAdd} />
+      ) : null}
+      {scenario === 'S1' && !tasks.some((t) => t.id.startsWith('user-')) && hint === planningHint && (
         <TwoToneRun
           text={hint}
           from={117}
@@ -774,6 +800,20 @@ export const TimelineScreen: React.FC<{
           style={{ position: 'absolute', left: 128, top: 701.95, width: 84.73, height: 12 }}
         />
       )}
+      {tail ? (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="timer"
+            onPress={onAdd}
+            style={{ position: 'absolute', left: space.textLeft, top: tail.sub + 91.6, width: 14.18, height: 14.18 }}
+          >
+            <TimerIcon size={14.18} color={colors.inkSecondary} />
+          </Pressable>
+          <HintRun parts={tail.parts} top={tail.sub + 75.2} onPress={onAdd} />
+          <Pressable accessibilityRole="button" onPress={onAdd} style={{ position: 'absolute', left: 128, top: tail.sub + 111.2, width: 84.73, height: 13.8 }} />
+        </>
+      ) : null}
     </>
   );
   return (

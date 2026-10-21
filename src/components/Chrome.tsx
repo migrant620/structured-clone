@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg/lib/module/elements';
 import {
   AlarmIcon,
   CalendarsIcon,
@@ -221,6 +221,8 @@ export const BottomNav: React.FC<{ active: NavKey; onSelect: (k: NavKey) => void
           key={item.key}
           accessibilityRole="button"
           accessibilityLabel={item.label}
+          accessibilityState={{ selected: item.key === active }}
+          aria-selected={item.key === active}
           onPress={() => onSelect(item.key)}
           style={{ position: 'absolute', left: item.cx - 12, top: NAV_ICON_DY, width: 24, height: 24 }}
         >

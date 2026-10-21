@@ -151,3 +151,42 @@ export const formatDuration = (minutes: number): string => {
 
 export const formatRange = (start: number, duration: number): string =>
   `${formatClock(start).slice(0, 5)} - ${formatClock(start + duration)} (${formatDuration(duration)})`;
+
+export const BEDTIME_DEFAULT = 22 * 60;
+
+export const FIRST_RUN_PLAN_END = 19 * 60 + 35;
+
+export const formatFreeTime = (minutes: number): string => {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+};
+
+export const planningHintParts = (bedtime: number): [string, string, string] | null => {
+  const free = bedtime - FIRST_RUN_PLAN_END;
+  return free > 0 ? ['Unlock potential in ', formatFreeTime(free), '. Plan it.'] : null;
+};
+
+export const tailHintParts = (tasks: Task[], bedtime: number): [string, string, string] | null => {
+  const ends = tasks.filter((x) => x.icon === 'at' && x.start !== null).map((x) => (x.start as number) + x.duration);
+  if (!ends.length) return null;
+  const free = bedtime - Math.max(...ends);
+  return free > 0 ? ['', formatFreeTime(free), ' to pursue passion.'] : null;
+};
+
+export const duplicateOf = (task: Task, tasks: Task[], id: string): Task => {
+  const start = nextFreeStart(tasks);
+  const range = formatRange(start, task.duration);
+  return {
+    ...task,
+    id,
+    start,
+    scheduled: true,
+    done: false,
+    icon: 'at',
+    sub: range,
+    rangeLabel: range,
+    checklist: task.checklist ? { ...task.checklist } : undefined,
+  };
+};

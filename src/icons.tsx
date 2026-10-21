@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg';
+import Svg, { Circle, G, Line, Path, Rect } from 'react-native-svg/lib/module/elements';
 
 export type IconProps = { size?: number; color?: string; bg?: string };
 
@@ -69,6 +69,18 @@ export const TimerIcon: React.FC<IconProps> = ({ size = 14.18, color = '#8A8A8E'
     <Line x1={11.6} y1={13.2} x2={11.6} y2={8.4} stroke={color} strokeWidth={2} strokeLinecap="round" />
     <Line x1={11.6} y1={13.2} x2={15} y2={15} stroke={color} strokeWidth={2} strokeLinecap="round" />
     <Line x1={18.4} y1={4.4} x2={21.4} y2={7.4} stroke={color} strokeWidth={2} strokeLinecap="round" />
+  </Svg>
+);
+
+export const HourglassIcon: React.FC<IconProps> = ({ size = 14.18, color = '#8A8A8E' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Rect x={3.7} y={1.3} width={16.4} height={2.3} rx={0.6} fill={color} />
+    <Rect x={3.7} y={20.1} width={16.4} height={2.3} rx={0.6} fill={color} />
+    <Path
+      fillRule="evenodd"
+      fill={color}
+      d="M5.2 3.6V6.8C5.2 9.6 8 11 10.6 11.5C8 12.2 5.2 13.6 5.2 16.4V20.1H18.6V16.4C18.6 13.6 15.8 12.2 13.2 11.5C15.8 11 18.6 9.6 18.6 6.8V3.6ZM6.9 3.6V6.8C6.9 9 9.4 10.4 11.9 10.4C14.4 10.4 16.9 9 16.9 6.8V3.6Z"
+    />
   </Svg>
 );
 

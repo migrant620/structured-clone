@@ -70,6 +70,18 @@ export const EditorSheet: React.FC<{
   onClose: () => void;
 }> = ({ mode, step, title, duration, rolled = false, start, recent = [], onTitle, onPickSuggestion, onDuration, onStart, onCommit, onClose }) => {
   const editing = mode === 'edit';
+  const [typing, setTyping] = React.useState(false);
+  React.useEffect(() => {
+    if (title || typing || typeof document === 'undefined') return undefined;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) return;
+      e.preventDefault();
+      setTyping(true);
+      onTitle(e.key);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [title, typing, onTitle]);
   const heading = editing ? 'Edit Task' : 'New Task';
   const span = editing ? TITLE_SPAN.edit : TITLE_SPAN.new;
   const fieldTop = step === 1 ? 119.36 : 96.07;
@@ -157,12 +169,31 @@ export const EditorSheet: React.FC<{
           <AtIcon width={24} height={24} color={colors.accent} />
         </Pressable>
       </Pressable>
-      {title ? (
+      {title || typing ? (
         <View style={{ position: 'absolute', left: 80.06, top: fieldTop, width: FIELD_W, height: TILE_W }}>
+          {!title ? (
+            <Text
+              pointerEvents="none"
+              style={{
+                position: 'absolute', left: 4.04, top: 12.37, width: 134.6, height: 23.29,
+                fontSize: 19.17, fontFamily: fontFamily.title, lineHeight: 23.29, color: colors.accent, opacity: 0.55,
+              }}
+            >
+              {titlePlaceholder}
+            </Text>
+          ) : null}
           <TextInput
             value={title}
             onChangeText={onTitle}
-            accessibilityLabel={title}
+            autoFocus={typing}
+            onFocus={(e) => {
+              const el = e.target as unknown as HTMLInputElement | null;
+              if (el && typeof el.setSelectionRange === 'function') el.setSelectionRange(el.value.length, el.value.length);
+            }}
+            onSubmitEditing={() => {
+              if (title) onCommit();
+            }}
+            accessibilityLabel={title || titlePlaceholder}
             style={{
               position: 'absolute',
               left: 0,
@@ -178,6 +209,11 @@ export const EditorSheet: React.FC<{
         </View>
       ) : (
         <>
+          <View
+            onStartShouldSetResponder={() => true}
+            onResponderRelease={() => setTyping(true)}
+            style={{ position: 'absolute', left: 80.06, top: fieldTop, width: FIELD_W, height: TILE_W, zIndex: 1 }}
+          />
           <View pointerEvents="none" style={{ position: 'absolute', left: 82.06, top: fieldTop + 14.1, width: 1.82, height: 19.5, backgroundColor: colors.accent }} />
           <Text
             style={{

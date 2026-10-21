@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
+import Svg, { Circle, Ellipse, Line, Path, Rect } from 'react-native-svg/lib/module/elements';
 import { XIcon } from '../icons';
 import { colors, fontFamily, frame } from '../theme/tokens';
-import { formatClock } from '../store';
+import { BEDTIME_DEFAULT, formatClock } from '../store';
 
 const GREY = '#85858A';
 const WHEEL_FAR = '#DCDCE0';
@@ -208,12 +209,47 @@ export const TimePage: React.FC<{
   </Frame>
 );
 
+const sparkle = (x: number, y: number, w: number, h: number): string => {
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+  const k = 0.18;
+  return `M${cx} ${y}Q${cx + w * k} ${cy - h * k} ${x + w} ${cy}Q${cx + w * k} ${cy + h * k} ${cx} ${y + h}Q${cx - w * k} ${cy + h * k} ${x} ${cy}Q${cx - w * k} ${cy - h * k} ${cx} ${y}Z`;
+};
+const curl = (x: number, y: number, w: number, h: number): string =>
+  `M${x + w * 0.2} ${y + h * 0.3}C${x + w * 0.5} ${y} ${x + w} ${y + h * 0.1} ${x + w * 0.75} ${y + h * 0.4}` +
+  `C${x + w * 0.55} ${y + h * 0.62} ${x + w * 0.15} ${y + h * 0.45} ${x + w * 0.4} ${y + h * 0.35}` +
+  `C${x + w * 0.85} ${y + h * 0.3} ${x + w * 0.95} ${y + h * 0.8} ${x + w * 0.45} ${y + h * 0.95}`;
+
+const BellArt: React.FC = () => (
+  <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: frame.width, height: frame.height }}>
+    <Svg width={frame.width} height={frame.height} viewBox={`0 0 ${frame.width} ${frame.height}`}>
+      <Line x1={93.3} y1={358} x2={115.9} y2={371.5} stroke="#FA9A95" strokeWidth={7.6} strokeLinecap="round" />
+      <Line x1={76.2} y1={393.8} x2={103.5} y2={391.6} stroke="#FA9A95" strokeWidth={7.6} strokeLinecap="round" />
+      <Line x1={78} y1={422.3} x2={106.4} y2={411.4} stroke="#FA9A95" strokeWidth={7.6} strokeLinecap="round" />
+      <Path d={sparkle(112.7, 429.1, 22.9, 27.3)} fill="#C8B1DD" />
+      <Path d={sparkle(79.6, 448.4, 24.4, 30.5)} fill="#C8B1DD" />
+      <Circle cx={214.9} cy={333} r={7.2} fill="#FEC121" />
+      <Path d="M124.7 410.1C135 378 168 343 202 336C222 332 240 345 236.2 362C233 390 229 420 232 446C200 452 150 440 124.7 410.1Z" fill="#FEC121" />
+      <Ellipse cx={180} cy={428} rx={55} ry={20} fill="#F6A61D" transform="rotate(19 180 428)" />
+      <Circle cx={177.8} cy={418.5} r={17} fill="#FDB70C" />
+      <Rect x={203.4} y={369.8} width={119.1} height={37.8} rx={18.9} fill="#CCD7DF" />
+      <Rect x={214.9} y={384.6} width={55.4} height={7.3} rx={3.65} fill="#96ACBE" />
+      <Rect x={276.6} y={384.6} width={27.7} height={7.3} rx={3.65} fill="#96ACBE" />
+      <Circle cx={318.2} cy={378.2} r={10.5} fill="#FE9569" />
+      <Path d={curl(173.1, 464.7, 21.1, 46.2)} stroke="#7EBA5C" strokeWidth={5.5} strokeLinecap="round" fill="none" />
+      <Path d={curl(209.8, 464.0, 24.4, 40.7)} stroke="#00825F" strokeWidth={5.5} strokeLinecap="round" fill="none" />
+      <Path d={curl(236.4, 446.9, 33.5, 37.5)} stroke="#527FA1" strokeWidth={5.5} strokeLinecap="round" fill="none" />
+    </Svg>
+  </View>
+);
+
 export const NotifyPage: React.FC<{ onAllow: () => void; onSkip: () => void; onClose: () => void }> = ({ onAllow, onSkip, onClose }) => (
   <Frame
     title={[{ text: 'Never Miss\nA ' }, { text: 'Task', accent: true }, { text: '!' }]}
     subtitle="Would you like timely alerts for your tasks?"
     onClose={onClose}
   >
+    <BellArt />
     <Footnote text="Customize them anytime in the settings. No spam, ever." top={639.27 - S} lines={2} />
     <Pressable
       accessibilityRole="button"
@@ -236,17 +272,17 @@ const requestAlerts = (): void => {
 };
 
 export const DEFAULT_WAKE = 8 * 60;
-export const DEFAULT_SLEEP = 22 * 60;
+export const DEFAULT_SLEEP = BEDTIME_DEFAULT;
 
 export const OnboardingFlow: React.FC<{
   only?: 'notify';
-  onDone: (wake: number | null) => void;
+  onDone: (result: { wake: number; sleep: number } | null) => void;
 }> = ({ only, onDone }) => {
   const [step, setStep] = React.useState(only === 'notify' ? 4 : 0);
   const [wake, setWake] = React.useState(DEFAULT_WAKE);
   const [sleep, setSleep] = React.useState(DEFAULT_SLEEP);
   const close = () => onDone(null);
-  const finish = () => onDone(only === 'notify' ? null : wake);
+  const finish = () => onDone(only === 'notify' ? null : { wake, sleep });
   switch (step) {
     case 0:
       return <WelcomePage onNext={() => setStep(1)} onClose={close} />;

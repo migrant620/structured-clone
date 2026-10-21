@@ -64,9 +64,10 @@ export const DetailSheet: React.FC<{
   done: boolean;
   onToggleDone?: () => void;
   onDelete?: () => void;
+  onDuplicate?: () => void;
   onEdit?: () => void;
   onClose?: () => void;
-}> = ({ title, range, done, onToggleDone, onDelete, onEdit, onClose }) => (
+}> = ({ title, range, done, onToggleDone, onDelete, onDuplicate, onEdit, onClose }) => (
   <View
     aria-modal
     accessibilityRole={"dialog" as unknown as AccessibilityRole}
@@ -125,7 +126,7 @@ export const DetailSheet: React.FC<{
       <View style={{ position: 'absolute', left: 16.01, top: 115, width: 360.73, height: 1, backgroundColor: colors.surfaceMuted }} />
       <View style={{ position: 'absolute', left: 16.01, top: 607 - SHEET_TOP, width: 360.73, height: 1, backgroundColor: colors.detailRule }} />
       <ActionCard label="Delete" icon={<TrashIcon size={18.19} color={colors.accent} />} left={16.01} iconLeft={45.85} labelLeft={4.0} labelW={101.9} onPress={onDelete} />
-      <ActionCard label="Duplicate" icon={<DuplicateIcon size={18.19} color={colors.accent} />} left={141.37} iconLeft={46.4} labelLeft={4.55} labelW={101.5} />
+      <ActionCard label="Duplicate" icon={<DuplicateIcon size={18.19} color={colors.accent} />} left={141.37} iconLeft={46.4} labelLeft={4.55} labelW={101.5} onPress={onDuplicate} />
       <ActionCard
         label={done ? 'Incomplete' : 'Complete'}
         icon={done ? <IncompleteIcon size={18.19} color={colors.accent} /> : <CheckCircleFillIcon size={18.19} color={colors.accent} />}
