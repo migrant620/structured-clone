@@ -2,7 +2,7 @@
   "name": "structured-clone",
   "version": "0.0.0",
   "private": true,
-  "description": "An independent, interactive day-planner UI prototype built with Expo, React Native and TypeScript. Noncommercial study and research only. Not affiliated with, endorsed by or sponsored by the makers of Structured.",
+  "description": "An independent, interactive day-planner UI prototype built with Expo, React Native and TypeScript. Not affiliated with, endorsed by or sponsored by the makers of Structured.",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
@@ -28,5 +28,5 @@
     "@types/react": "~19.2.2",
     "typescript": "6.0.3"
   },
-  "license": "UNLICENSED"
+  "license": "MIT"
 }
