@@ -3,7 +3,7 @@ import { AccessibilityRole, Pressable, Text, TextInput, View } from 'react-nativ
 import { TwoToneRun } from '../components/TwoToneRun';
 import { AtIcon, CalendarSmallIcon, RunIcon, TvIcon, Person2Icon, XIcon } from '../icons';
 import { colors, fontFamily } from '../theme/tokens';
-import { DEFAULT_START, durationPresets, formatSuggestionRange, Suggestion, suggestions, TASK_COLOURS, titlePlaceholder } from '../store';
+import { DEFAULT_START, durationPresets, formatClock, formatSuggestionRange, Suggestion, suggestions, TASK_COLOURS, titlePlaceholder } from '../store';
 
 const PAGE = colors.page;
 const INK = colors.ink;
@@ -73,10 +73,25 @@ export const EditorSheet: React.FC<{
 }> = ({ mode, step, title, duration, rolled = false, start, recent = [], onTitle, onPickSuggestion, onDuration, onStart, colour, onColour, onCommit, onClose }) => {
   const editing = mode === 'edit';
   const [typing, setTyping] = React.useState(false);
+  const [invalidTitle, setInvalidTitle] = React.useState(false);
+  const titleInput = React.useRef<TextInput>(null);
+  const colourRefs = React.useRef<(View | null)[]>([]);
+  const requestCommit = () => {
+    if (!title.trim()) {
+      setInvalidTitle(true);
+      setTyping(true);
+      requestAnimationFrame(() => titleInput.current?.focus());
+      return;
+    }
+    setInvalidTitle(false);
+    onCommit();
+  };
   React.useEffect(() => {
     if (title || typing || typeof document === 'undefined') return undefined;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.defaultPrevented || e.isComposing || e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest?.('input,textarea,button,[role="button"],[contenteditable="true"]')) return;
       e.preventDefault();
       setTyping(true);
       onTitle(e.key);
@@ -89,12 +104,7 @@ export const EditorSheet: React.FC<{
   const fieldTop = step === 1 ? 119.36 : 96.07;
   const tileTop = fieldTop;
   const base = start ?? (rolled ? 20 * 60 + 15 : DEFAULT_START);
-  const fmt = (m: number) => {
-    const h24 = Math.floor(m / 60) % 24;
-    const suffix = h24 < 12 ? 'AM' : 'PM';
-    const h = h24 % 12 === 0 ? 12 : h24 % 12;
-    return `${String(h).padStart(2, '0')}:${String(m % 60).padStart(2, '0')} ${suffix}`;
-  };
+  const fmt = formatClock;
   const wheelStep = duration === 1 ? 5 : 15;
   const wheelOffsets = [-2 * wheelStep, -wheelStep, wheelStep, 2 * wheelStep];
   const rootRef = React.useRef<View>(null);
@@ -104,6 +114,7 @@ export const EditorSheet: React.FC<{
     if (step !== 2 || typeof document === 'undefined') return undefined;
     const node = rootRef.current as unknown as HTMLElement | null;
     const onWheel = (e: WheelEvent) => {
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
       if (!node || typeof node.getBoundingClientRect !== 'function' || e.deltaY === 0) return;
       const r = node.getBoundingClientRect();
       const y = ((e.clientY - r.top) / r.height) * 777.45;
@@ -112,9 +123,11 @@ export const EditorSheet: React.FC<{
       stepRef.current(e.deltaY > 0 ? 1 : -1);
     };
     const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.isComposing || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
       const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+      const control = t?.closest?.('input,textarea,button,[role="button"],[contenteditable="true"]');
+      if (control && !control.id.startsWith('structured-wheel-')) return;
       e.preventDefault();
       stepRef.current(e.key === 'ArrowDown' ? 1 : -1);
     };
@@ -140,6 +153,18 @@ export const EditorSheet: React.FC<{
   const pillLeft = unitBox.left + unitBox.w / 2 - PILL_W / 2;
   const selectedColour = Math.max(0, TASK_COLOURS.indexOf((colour ?? TASK_COLOURS[0]) as (typeof TASK_COLOURS)[number]));
   const tint = TASK_COLOURS[selectedColour];
+  const colourKeyboard = (index: number) => ({
+    onKeyDownCapture: (event: React.KeyboardEvent) => {
+      if (event.defaultPrevented || event.nativeEvent.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
+      const delta = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 0;
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? TASK_COLOURS.length - 1 : delta ? (index + delta + TASK_COLOURS.length) % TASK_COLOURS.length : null;
+      if (next === null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      onColour?.(TASK_COLOURS[next]);
+      requestAnimationFrame(() => colourRefs.current[next]?.focus());
+    },
+  });
 
   return (
     <View
@@ -215,16 +240,20 @@ export const EditorSheet: React.FC<{
             </Text>
           ) : null}
           <TextInput
+            ref={titleInput}
+            {...{ 'aria-invalid': invalidTitle }}
             value={title}
-            onChangeText={onTitle}
+            onChangeText={(value) => {
+              setTyping(true);
+              setInvalidTitle(false);
+              onTitle(value);
+            }}
             autoFocus={typing}
             onFocus={(e) => {
               const el = e.target as unknown as HTMLInputElement | null;
               if (el && typeof el.setSelectionRange === 'function') el.setSelectionRange(el.value.length, el.value.length);
             }}
-            onSubmitEditing={() => {
-              if (title) onCommit();
-            }}
+            onSubmitEditing={requestCommit}
             accessibilityLabel={title || titlePlaceholder}
             style={{
               position: 'absolute',
@@ -318,7 +347,7 @@ export const EditorSheet: React.FC<{
               </Pressable>
             );
           })}
-          <CommitButton label="Continue" labelBox={COMMIT_LABEL.continue} onPress={onCommit} />
+          <CommitButton label="Continue" labelBox={COMMIT_LABEL.continue} onPress={requestCommit} />
         </>
       ) : (
         <>
@@ -348,6 +377,7 @@ export const EditorSheet: React.FC<{
             <Pressable
               key={t.y}
               accessible={false}
+              nativeID={`structured-wheel-${i}`}
               onPress={() => onStart?.(base + wheelOffsets[i])}
               style={{ position: 'absolute', left: 160.47, top: t.y, width: 73.14, height: 22.2 }}
             >
@@ -508,24 +538,32 @@ export const EditorSheet: React.FC<{
           {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
             <Pressable
               key={i}
+              ref={(element) => { colourRefs.current[i] = element; }}
               accessibilityRole="button"
               accessibilityState={{ selected: i === selectedColour }}
               aria-selected={i === selectedColour}
+              {...{ 'aria-pressed': i === selectedColour }}
+              tabIndex={i === selectedColour ? 0 : -1}
+              {...colourKeyboard(i)}
               onPress={() => onColour?.(TASK_COLOURS[i])}
               style={{ position: 'absolute', left: 22.2 + i * 40.03, top: 697.21, width: 40.03, height: 13.1 }}
             />
           ))}
           <Pressable
+            ref={(element) => { colourRefs.current[8] = element; }}
             accessibilityRole="button"
             accessibilityState={{ selected: selectedColour === 8 }}
             aria-selected={selectedColour === 8}
+            {...{ 'aria-pressed': selectedColour === 8 }}
+            tabIndex={selectedColour === 8 ? 0 : -1}
+            {...colourKeyboard(8)}
             onPress={() => onColour?.(TASK_COLOURS[8])}
             style={{ position: 'absolute', left: 342.42, top: 697.21, width: 48.03, height: 48.03 }}
           />
           <CommitButton
             label={editing ? 'Update Task' : 'Create Task'}
             labelBox={editing ? COMMIT_LABEL.update : COMMIT_LABEL.create}
-            onPress={onCommit}
+            onPress={requestCommit}
           />
         </>
       )}

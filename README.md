@@ -33,7 +33,7 @@ What makes Structured's interface work, and what this recreation had to get righ
 
 **Sheets keep the day in view.** The editor, the detail sheet and the delete confirmation arrive as rounded sheets over the live timeline, dimmed by one scrim. The plan stays legible behind them, and completing or deleting a task updates the timeline you can still see.
 
-**Empty states are invitations.** The first-run timeline is not blank: grey guide discs ("Start With a Simple Plan Today!", "Plan Your First Task" with its own checklist) teach the spine by sitting on it, and the inbox explains itself in one line.
+**Empty states are invitations.** The first timeline includes guide rows such as "Get Started with Structured!" and "Add Your First Task", with icons and checklist counts alongside the text.
 
 ## Design system at a glance
 
@@ -45,9 +45,9 @@ The full token set — colours, type scale, spacing, radii and component notes �
 
 | Area | Things to try |
 |---|---|
-| Day timeline | See the first-run plan with its guide rows, gutter time labels and the black "now" marker; switch days on the week strip. |
-| Create a task | Tap **+**. Pick a suggestion chip or type a title, then set **When?** and **How long?** on the duration wheel — the selected segment carries the coral pill. |
-| Task detail | Tap a task. The sheet shows its time range with Delete / Duplicate / Complete cards and **Edit Task**. |
+| Day timeline | See the first-run plan, gutter time labels and black "now" marker. The starter guides open onboarding, task creation, Inbox and Settings. |
+| Create a task | Tap **+**. Pick a suggestion or enter a title, then use the **When?** time wheel and **How long?** duration presets. The colour swatches support arrow keys, Home and End. |
+| Task detail | Tap a regular task. The sheet shows its time range with Delete / Duplicate / Complete cards and **Edit Task**. |
 | Complete | Tap **Complete** — the title strikes through, the disc mutes, and the card becomes **Incomplete**. |
 | Delete | Tap **Delete** and confirm on the dialog; the row leaves the spine. |
 | Inbox | Open the **Inbox** tab for the thoughts capture with its empty state and **New Inbox Task**. |
@@ -55,9 +55,9 @@ The full token set — colours, type scale, spacing, radii and component notes �
 
 ### A first walkthrough
 
-1. On the timeline, tap **+**, pick **Watch a Film**, then step through **When?** and **How long?** — watch the coral pill follow your selection.
+1. On the timeline, tap **+**, pick **Watch a Movie**, then adjust **When?** and **How long?**.
 2. Create the task and find it on the spine with its own time range.
-3. Tap any task to open the detail sheet, then tap **Complete** and watch the title strike through.
+3. Tap the task you created to open its detail sheet, then tap **Complete** and watch the title strike through.
 4. Open the same task again and tap **Delete**, then confirm — the spine closes the gap.
 5. Switch to **Inbox** and **Settings** to see the two supporting tabs.
 
@@ -85,15 +85,15 @@ The static output is written to `dist/`. Serve that directory over HTTP or HTTPS
 
 ## Demo build
 
-The published demo at <https://migrant620.github.io/structured/> is built from this repository. It was last rebuilt and redeployed on 2026-10-23 (GitHub Pages commit `0b6df1d2`).
+The published demo at <https://migrant620.github.io/structured/> is built from this repository. It was last rebuilt and redeployed on 2026-11-05 (GitHub Pages commit `c9bb659d`).
 
 ## Scope and limitations
 
 - **First batch of screens.** This edition covers the day timeline in its first-run, populated, completed and delete-confirmation states, the two-step task editor, the task detail sheet, the inbox tab and the settings tab. Recurring-task editing, calendar import, the colour picker wheel, reminders and the Pro purchase flow are not built.
-- **Every task, note and label is fictional.** All task titles, notes, inbox copy and settings labels are original content written for this study. Times, dates and counts are illustrative. No real person's content is reproduced.
+- **Sample data.** The prototype uses sample tasks and notes. Times, dates and counts are illustrative. No real person's content is used.
 - **Icons are redrawn.** The app's own icon face is proprietary, so every icon here is an original vector drawing.
 - **Typeface.** The interface face is Roboto under the SIL Open Font License 1.1, bundled locally in `assets/fonts/` as twelve static instances, one per typographic role.
-- **Mobile layout on the web.** The interface is designed for a 393 dp phone column; on wider screens it stays centred rather than stretching.
+- **Mobile layout on the web.** The interface is designed for a 393 dp phone column; on wider screens it stays centred rather than stretching. Cross-day navigation is not implemented.
 - **Validation scope.** The first-batch screens have been checked in Chromium at 393 dp width. This does not establish complete feature coverage, Safari/Firefox compatibility, or native Android/iOS acceptance.
 
 ## Commission a prototype

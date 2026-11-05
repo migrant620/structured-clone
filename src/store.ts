@@ -1,6 +1,14 @@
 
 export type DiscIcon = 'alarm' | 'checklist' | 'plusCircle' | 'tray' | 'gear' | 'at';
 
+let taskSequence = 0;
+export const nextTaskId = (): string => `user-${Date.now()}-${++taskSequence}`;
+
+export const normalizeMinutes = (minutes: number): number => {
+  const whole = Number.isFinite(minutes) ? Math.trunc(minutes) : 0;
+  return ((whole % 1440) + 1440) % 1440;
+};
+
 export type Task = {
   id: string;
   title: string;
@@ -122,24 +130,27 @@ export const recentSuggestions = (tasks: Task[]): Suggestion[] => {
 export const titlePlaceholder = 'Answer Emails';
 
 export const formatClock = (minutes: number): string => {
-  const h24 = Math.floor(minutes / 60) % 24;
-  const m = minutes % 60;
+  const value = normalizeMinutes(minutes);
+  const h24 = Math.floor(value / 60);
+  const m = value % 60;
   const suffix = h24 < 12 ? 'AM' : 'PM';
   const h = h24 % 12 === 0 ? 12 : h24 % 12;
   return `${String(h).padStart(2, '0')}:${String(m % 60).padStart(2, '0')} ${suffix}`;
 };
 
 export const formatPill = (minutes: number): string => {
-  const h24 = Math.floor(minutes / 60) % 24;
-  const m = minutes % 60;
+  const value = normalizeMinutes(minutes);
+  const h24 = Math.floor(value / 60);
+  const m = value % 60;
   const suffix = h24 < 12 ? 'AM' : 'PM';
   const h = h24 % 12 === 0 ? 12 : h24 % 12;
   return `${String(h).padStart(2, '0')}:${String(m % 60).padStart(2, '0')} ${suffix}`;
 };
 
 export const formatGutter = (minutes: number): string => {
-  const h24 = Math.floor(minutes / 60) % 24;
-  const m = minutes % 60;
+  const value = normalizeMinutes(minutes);
+  const h24 = Math.floor(value / 60);
+  const m = value % 60;
   const h = h24 % 12 === 0 ? 12 : h24 % 12;
   return `${h}:${String(m).padStart(2, '0')}`;
 };
@@ -183,7 +194,7 @@ export const gapHintParts = (gap: number): [string, string, string] | null =>
   gap >= GAP_HINT_MIN ? ['', formatFreeTime(gap), ' for you—enjoy!'] : null;
 
 export const duplicateOf = (task: Task, tasks: Task[], id: string): Task => {
-  const start = nextFreeStart(tasks);
+  const start = normalizeMinutes(nextFreeStart(tasks));
   const range = formatRange(start, task.duration);
   return {
     ...task,

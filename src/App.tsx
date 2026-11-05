@@ -18,6 +18,8 @@ import {
   s7Tasks,
   s10Tasks,
   formatClock,
+  nextTaskId,
+  normalizeMinutes,
   Task,
 } from './store';
 
@@ -189,11 +191,11 @@ export default React.memo(function App() {
   );
   const [confirmId, setConfirmId] = React.useState<string | null>(scenario === 'S10' ? 'grocery' : null);
 
-  const openTask = React.useCallback((id: string) => setOpenId(id), []);
   const duplicateTask = React.useCallback((id: string) => {
+    const copyId = nextTaskId();
     setTasks((s) => {
       const src = s.find((t) => t.id === id);
-      return src ? [...s, duplicateOf(src, s, `user-${Date.now()}`)] : s;
+      return src ? [...s, duplicateOf(src, s, copyId)] : s;
     });
     setOpenId(null);
   }, []);
@@ -209,7 +211,7 @@ export default React.memo(function App() {
   const commitTask = React.useCallback((title: string, duration: number, start: number, colour?: string) => {
     const range = formatRange(start, duration);
     const task: Task = {
-      id: `user-${Date.now()}`,
+      id: nextTaskId(),
       title,
       sub: range,
       start,
@@ -239,8 +241,16 @@ export default React.memo(function App() {
   }, []);
 
   const onFab = React.useCallback(() => {
-    if (editor === null) setEditor({ mode: 'new', step: 1, title: '', duration: 15, start: nextFreeStart(tasks) });
+    if (editor === null) setEditor({ mode: 'new', step: 1, title: '', duration: 15, start: normalizeMinutes(nextFreeStart(tasks)) });
   }, [editor, tasks]);
+
+  const openTask = React.useCallback((id: string) => {
+    if (id === 'guide-start') { setOnboarding('full'); return; }
+    if (id === 'guide-first') { onFab(); return; }
+    if (id === 'guide-inbox') { setTab('inbox'); return; }
+    if (id === 'guide-own') { setTab('settings'); return; }
+    setOpenId(id);
+  }, [onFab]);
 
   React.useEffect(() => {
     const id = setTimeout(preloadAll, 0);
@@ -384,16 +394,18 @@ export default React.memo(function App() {
             )
           }
           onDuration={(minutes: number) => setEditor((e) => (e ? { ...e, duration: minutes } : e))}
-          onStart={(minutes: number) => setEditor((e) => (e ? { ...e, start: minutes } : e))}
+          onStart={(minutes: number) => setEditor((e) => (e ? { ...e, start: normalizeMinutes(minutes) } : e))}
           colour={editor.colour}
           onColour={(colour: string) => setEditor((e) => (e ? { ...e, colour } : e))}
           onCommit={() => {
+            const title = editor.title.trim();
+            if (!title) return;
             if (editor.step === 1) setEditor({ ...editor, step: 2 });
             else if (editor.mode === 'edit') {
-              if (openId) applyEdit(openId, editor.title, editor.duration, editor.start, editor.colour);
+              if (openId) applyEdit(openId, title, editor.duration, editor.start, editor.colour);
               setOpenId(null);
               setEditor(null);
-            } else commitTask(editor.title || 'Answer Emails', editor.duration, editor.start, editor.colour);
+            } else commitTask(title, editor.duration, editor.start, editor.colour);
           }}
           onClose={() => setEditor(null)}
         />
