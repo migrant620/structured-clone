@@ -11,6 +11,7 @@ import {
 } from '../icons';
 import { colors, fontFamily, frame, type } from '../theme/tokens';
 import { useDragDismiss } from '../components/dragDismiss';
+import { useModalFocus } from '../components/Chrome';
 
 export const SCRIM = 'rgba(0, 0, 0, 0.322)';
 export const SCRIM_DIALOG = 'rgba(0, 0, 0, 0.6)';
@@ -64,6 +65,7 @@ const ActionCard: React.FC<{
 
 export const DetailSheet: React.FC<{
   title: string;
+  returnFocus?: HTMLElement | null;
   range: string;
   done: boolean;
   tint?: string;
@@ -72,10 +74,12 @@ export const DetailSheet: React.FC<{
   onDuplicate?: () => void;
   onEdit?: () => void;
   onClose?: () => void;
-}> = ({ title, range, done, tint, onToggleDone, onDelete, onDuplicate, onEdit, onClose }) => {
+}> = ({ title, returnFocus, range, done, tint, onToggleDone, onDelete, onDuplicate, onEdit, onClose }) => {
   const { pan, dy } = useDragDismiss(onClose);
+  const modalRef = useModalFocus(onClose, undefined, returnFocus);
   return (
   <View
+    ref={modalRef}
     aria-modal
     accessibilityRole={"dialog" as unknown as AccessibilityRole}
     style={{ position: 'absolute', left: 0, top: 0, width: frame.width, height: frame.height, zIndex: 40 }}
@@ -122,6 +126,7 @@ export const DetailSheet: React.FC<{
         {range}
       </Text>
       <Text
+        nativeID="structured-modal-heading"
         style={{
           position: 'absolute',
           left: 60.04,
@@ -175,8 +180,11 @@ export const DetailSheet: React.FC<{
 export const DeleteDialog: React.FC<{
   onCancel?: () => void;
   onDelete?: () => void;
-}> = ({ onCancel, onDelete }) => (
+}> = ({ onCancel, onDelete }) => {
+  const modalRef = useModalFocus(onCancel, 'Delete', undefined, undefined, 'Delete confirmation');
+  return (
   <View
+    ref={modalRef}
     aria-modal
     accessibilityRole={"dialog" as unknown as AccessibilityRole}
     style={{ position: 'absolute', left: 0, top: 0, width: frame.width, height: frame.height, zIndex: 40 }}
@@ -198,7 +206,7 @@ export const DeleteDialog: React.FC<{
         backgroundColor: colors.sheet,
       }}
     >
-      <Text style={{ position: 'absolute', left: 24.01, top: 24.88, height: 25.84, fontFamily: fontFamily.number, fontSize: 21.6, letterSpacing: 0.18, lineHeight: 25.84, color: colors.ink }}>
+      <Text nativeID="structured-modal-heading" style={{ position: 'absolute', left: 24.01, top: 24.88, height: 25.84, fontFamily: fontFamily.number, fontSize: 21.6, letterSpacing: 0.18, lineHeight: 25.84, color: colors.ink }}>
         Delete Task
       </Text>
       <Text style={{ position: 'absolute', left: 24.01, top: 82.01, width: 263.82, height: 16.38, fontFamily: fontFamily.sub, fontSize: 13.8, letterSpacing: 0.08, lineHeight: 16.38, color: '#85858A' }}>
@@ -213,7 +221,8 @@ export const DeleteDialog: React.FC<{
     </View>
     </Pressable>
   </View>
-);
+  );
+};
 
 export const ProChip: React.FC<{ x: number; y: number }> = ({ x, y }) => (
   <View

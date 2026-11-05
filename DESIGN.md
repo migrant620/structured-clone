@@ -128,10 +128,8 @@ sits on a `#EDDCDB` capsule, its own token rather than an accent-over-grey mix.
 
 ## Typography
 
-The face is Roboto, but nominal weights are not what ships. Each typographic role registers its
-own static instance cut from the variable font — twelve roles in total — because small type reads
-light in a browser and each role needs its own weight to hold its colour. They are registered as
-named instances (RobotoText, RobotoGutter, RobotoTitle, and so on).
+The bundled Roboto family includes twelve static faces for the typographic roles, including
+RobotoText, RobotoGutter and RobotoTitle. Sizes, weights and tracking vary by role.
 
 Two details matter. Row titles carry `letterSpacing: 0.15`, which opens the titles slightly
 without changing their size. And the gutter's "now" label is
@@ -153,16 +151,12 @@ The 56 dp FAB floats at (348.73, 669.45) over the sheet's bottom-right.
 
 ## Elevation & Depth
 
-Depth is expressed by sheets, not shadows. The editor, the task detail sheet and the delete
-confirmation slide over the live timeline under one dimming scrim, each with the sheet's own 22 dp
-top rounding. The plan stays legible behind them, and actions taken in a sheet update the timeline
+The task detail sheet and delete confirmation overlay the timeline with a dimming scrim. The detail sheet has 22 dp top rounding; the delete card has 8 dp rounded corners. The editor occupies its own full frame. The plan stays legible behind them, and actions taken in a sheet update the timeline
 still visible above the scrim.
 
 ## Shapes
 
-Radii follow function: 22 on the sheet that holds the day, 16 on cards (action cards, dialog
-cards, Pro banner), 8 on the editor's selection pill, fully rounded discs, rings and the FAB's
-28. The week strip's mark discs overflow their 8 dp accessibility nodes to 13.82 dp —
+The day sheet has 22 dp top corners. Task action cards and the delete card use an 8 dp radius. The editor selection pill is rounded at 8 dp, while discs, rings and the FAB are circular. The week strip's mark discs overflow their 8 dp accessibility nodes to 13.82 dp —
 the disc is its own token, not a property of the node.
 
 ## Components
@@ -177,13 +171,18 @@ the disc is its own token, not a property of the node.
 | DeleteDialog | The delete confirmation card over the scrim. |
 | InboxScreen / SettingsScreen | The two supporting tabs, sharing the same shell and bottom bar. |
 
-## Do's and Don'ts
+## Interaction behavior
 
-- Use real text, inputs, buttons and data state; creating, completing and deleting must move the
-  spine and stay consistent between timeline and sheet.
-- Keep the accent reserved: a new surface that needs coral is a planning surface, or it is grey.
-- Keep completed tasks on the spine; do not fade them out of the day.
-- Do not substitute nominal font weights for the custom instances.
+Creating, editing, completing and deleting update the same local task state. Delete cancellation
+returns to the task detail. Tabs retain timeline scroll position. Suggestions retain their supplied
+start and duration, including a 10-minute duration outside the usual preset choices.
+
+The task detail, delete dialog and editor contain keyboard focus, accept Escape outside IME
+composition and restore focus to their relevant control. Onboarding opens with the current local
+wake and sleep times; its time wheel supports five-minute arrow steps, hour page steps and Home/End.
+Cancelling onboarding returns to the timeline. Notifications & Alerts follows the browser's queried
+permission state and subsequent changes where supported, with a static permission fallback when
+querying is unavailable. This prototype does not schedule or deliver notifications.
 
 ## Responsive Behavior
 

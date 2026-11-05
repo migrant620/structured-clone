@@ -254,3 +254,69 @@ export const BottomNav: React.FC<{ active: NavKey; onSelect: (k: NavKey) => void
 );
 
 export const unusedGear = GearIcon;
+const modalStack: HTMLElement[] = [];
+
+export function useModalFocus(onClose?: () => void, restoreLabel?: string, returnFocus?: HTMLElement | null, initialId = 'structured-modal-heading', dialogLabel = 'Task details') {
+  const ref = React.useRef<View>(null);
+  const closeRef = React.useRef(onClose);
+  const labelRef = React.useRef(restoreLabel);
+  const returnRef = React.useRef(returnFocus);
+  returnRef.current = returnFocus;
+  closeRef.current = onClose;
+  labelRef.current = restoreLabel;
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const panel = ref.current as unknown as HTMLElement | null;
+    if (!panel?.querySelectorAll) return;
+    const opener = document.activeElement as HTMLElement | null;
+    modalStack.push(panel);
+    const top = () => modalStack[modalStack.length - 1];
+    const controls = () => Array.from(panel.querySelectorAll<HTMLElement>('button,input,textarea,[tabindex="0"]'))
+      .filter((element) => element.tabIndex >= 0 && !element.hasAttribute('disabled') && element.getAttribute('aria-disabled') !== 'true'
+        && element.getAttribute('aria-hidden') !== 'true' && element.getBoundingClientRect().width > 0 && element.getBoundingClientRect().height > 0);
+    const heading = panel.querySelector<HTMLElement>(`[id="${initialId}"]`);
+    if (heading) {
+      heading.setAttribute('tabindex', '-1');
+      heading.style.outline = 'none';
+      panel.setAttribute('aria-label', dialogLabel);
+    }
+    const initial = () => {
+      if (heading) return heading;
+      const items = controls();
+      return items.find((element) => element.getBoundingClientRect().height < panel.getBoundingClientRect().height / 2) ?? items[0];
+    };
+    if (!panel.contains(document.activeElement)) initial()?.focus();
+    const keydown = (event: KeyboardEvent) => {
+      if (top() !== panel || event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.key === 'Escape' && !event.repeat) {
+        event.preventDefault(); event.stopPropagation(); closeRef.current?.();
+      } else if (event.key === 'Tab') {
+        const items = controls();
+        if (!items.length) return;
+        const current = items.indexOf(document.activeElement as HTMLElement);
+        const next = event.shiftKey ? (current <= 0 ? items.length - 1 : current - 1) : (current + 1) % items.length;
+        event.preventDefault(); event.stopPropagation(); items[next].focus();
+      }
+    };
+    const contain = (event: FocusEvent) => {
+      if (top() === panel && !panel.contains(event.target as Node)) initial()?.focus();
+    };
+    document.addEventListener('keydown', keydown, true);
+    document.addEventListener('focusin', contain);
+    return () => {
+      document.removeEventListener('keydown', keydown, true);
+      document.removeEventListener('focusin', contain);
+      const index = modalStack.indexOf(panel);
+      if (index >= 0) modalStack.splice(index, 1);
+      requestAnimationFrame(() => {
+        const labelled = labelRef.current
+          ? Array.from(document.querySelectorAll<HTMLElement>('button,[role="button"]')).find((element) => element.getAttribute('aria-label') === labelRef.current)
+          : null;
+        const target = labelled ?? (returnRef.current?.isConnected && returnRef.current !== document.body ? returnRef.current : null) ?? (opener?.isConnected && opener !== document.body ? opener : null);
+        if (target?.isConnected && (!top() || top().contains(target))) target.focus();
+      });
+    };
+  }, []);
+  return ref;
+}
+

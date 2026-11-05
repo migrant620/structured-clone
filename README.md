@@ -29,7 +29,7 @@ What makes Structured's interface work, and what this recreation had to get righ
 
 **Completed means struck through, not greyed away.** A completed task keeps its place on the spine: the title takes a line-through, its disc turns muted, and the action card flips to "Incomplete". The day's history stays visible instead of vanishing.
 
-**Weight is set per role, not nominal.** The face is Roboto, but each typographic role registers its own static instance cut from the variable font — twelve roles from gutter labels at 10.2 dp to the month header at 23 dp — because nominal weights read too light in a browser. Hierarchy comes from real weight stops and careful tracking, not from extra greys.
+**Type follows each role.** Bundled Roboto has twelve static faces for roles ranging from gutter labels at 10.2 dp to the month header at 23 dp. Sizes, weights and tracking vary by role.
 
 **Sheets keep the day in view.** The editor, the detail sheet and the delete confirmation arrive as rounded sheets over the live timeline, dimmed by one scrim. The plan stays legible behind them, and completing or deleting a task updates the timeline you can still see.
 
@@ -45,13 +45,13 @@ The full token set — colours, type scale, spacing, radii and component notes �
 
 | Area | Things to try |
 |---|---|
-| Day timeline | See the first-run plan, gutter time labels and black "now" marker. The starter guides open onboarding, task creation, Inbox and Settings. |
-| Create a task | Tap **+**. Pick a suggestion or enter a title, then use the **When?** time wheel and **How long?** duration presets. The colour swatches support arrow keys, Home and End. |
+| Day timeline | See the first-run plan, gutter time labels and black "now" marker. The starter guides open onboarding, task creation, Inbox and Settings. Switching tabs keeps the timeline scroll position. |
+| Create a task | Tap **+**. Pick a suggestion or enter a title, then use the **When?** time wheel and **How long?** duration presets. Suggestions apply their own time and duration, including the 10-minute option. The colour swatches support arrow keys, Home and End. |
 | Task detail | Tap a regular task. The sheet shows its time range with Delete / Duplicate / Complete cards and **Edit Task**. |
 | Complete | Tap **Complete** — the title strikes through, the disc mutes, and the card becomes **Incomplete**. |
-| Delete | Tap **Delete** and confirm on the dialog; the row leaves the spine. |
+| Delete | Tap **Delete** and confirm on the dialog; the row leaves the spine. Cancel returns to the same task detail. |
 | Inbox | Open the **Inbox** tab for the thoughts capture with its empty state and **New Inbox Task**. |
-| Settings | Open the **Settings** tab for the Pro banner, import rows, notifications and support sections. |
+| Settings | Open the **Settings** tab for the Pro banner, import rows, notifications and support sections. Notifications & Alerts follows the browser permission state where supported; it does not schedule notifications. |
 
 ### A first walkthrough
 
@@ -61,7 +61,7 @@ The full token set — colours, type scale, spacing, radii and component notes �
 4. Open the same task again and tap **Delete**, then confirm — the spine closes the gap.
 5. Switch to **Inbox** and **Settings** to see the two supporting tabs.
 
-Data is static and local to the page; reloading returns you to the first-run plan.
+Tasks and onboarding time choices stay local to the current page; reloading returns you to the first-run plan. Cancelling onboarding returns to the timeline. The onboarding time wheel supports arrow keys, Home, End and Page Up/Down. Task detail, delete confirmation and editor support keyboard focus containment and Escape with focus restored to the relevant control.
 
 ## Run locally
 
@@ -85,7 +85,7 @@ The static output is written to `dist/`. Serve that directory over HTTP or HTTPS
 
 ## Demo build
 
-The published demo at <https://migrant620.github.io/structured/> is built from this repository. It was last rebuilt and redeployed on 2026-11-05 (GitHub Pages commit `c9bb659d`).
+The published demo at <https://migrant620.github.io/structured/> is built from this repository. It was last rebuilt and redeployed on 2026-11-05 (GitHub Pages commit `144488ac`).
 
 ## Scope and limitations
 

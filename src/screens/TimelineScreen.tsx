@@ -649,6 +649,8 @@ const HintRun: React.FC<{ parts: [string, string, string]; top: number; onPress:
 
 export const TimelineScreen: React.FC<{
   tasks: Task[];
+  offset: number;
+  onOffset: React.Dispatch<React.SetStateAction<number>>;
   hint: string;
   onOpen: (id: string) => void;
   onAdd: () => void;
@@ -656,7 +658,7 @@ export const TimelineScreen: React.FC<{
   scenario?: 'S1' | 'S2' | 'S6' | 'S7' | 'S10';
   hintParts?: [string, string, string] | null;
   tailHint?: [string, string, string] | null;
-}> = ({ tasks, hint, onOpen, onAdd, onToggle, scenario = 'S1', hintParts = null, tailHint = null }) => {
+}> = ({ tasks, hint, onOpen, onAdd, onToggle, offset, onOffset: setOffset, scenario = 'S1', hintParts = null, tailHint = null }) => {
   const scrolled = scenario === 'S10' || scenario === 'S7';
   const GUTTER_ACTIVE =
     scenario === 'S1'
@@ -711,7 +713,6 @@ export const TimelineScreen: React.FC<{
   const tailBottom = tail ? tail.sub + 111.2 + 13.8 : 0;
   const contentHeight = Math.max(frame.height, lastBottom + space.navBar.height + 16, tailBottom + space.navBar.height + 4);
   const maxOffset = Math.max(0, contentHeight - frame.height);
-  const [offset, setOffset] = React.useState(0);
   const clamp = React.useCallback((v: number) => Math.min(maxOffset, Math.max(0, v)), [maxOffset]);
   React.useEffect(() => {
     setOffset((o) => clamp(o));

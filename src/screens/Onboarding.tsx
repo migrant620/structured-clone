@@ -145,6 +145,7 @@ const TimeWheel: React.FC<{ value: number; onChange: (v: number) => void }> = ({
     const node = ref.current as unknown as HTMLElement | null;
     if (!node || typeof node.addEventListener !== 'function') return undefined;
     const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.deltaY === 0) return;
       e.preventDefault();
       step(e.deltaY > 0 ? 5 : -5);
     };
@@ -157,6 +158,20 @@ const TimeWheel: React.FC<{ value: number; onChange: (v: number) => void }> = ({
         <Pressable
           accessibilityRole="adjustable"
           accessibilityLabel={formatClock(value)}
+          tabIndex={0}
+          aria-valuemin={0}
+          aria-valuemax={1439}
+          aria-valuenow={value}
+          aria-valuetext={formatClock(value)}
+          {...{ onKeyDownCapture: (event: React.KeyboardEvent) => {
+            if (event.nativeEvent.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
+            const delta = event.key === 'ArrowUp' || event.key === 'ArrowRight' ? 5 : event.key === 'ArrowDown' || event.key === 'ArrowLeft' ? -5 : event.key === 'PageUp' ? 60 : event.key === 'PageDown' ? -60 : null;
+            if (delta === null && event.key !== 'Home' && event.key !== 'End') return;
+            event.preventDefault(); event.stopPropagation();
+            if (event.key === 'Home') onChange(0);
+            else if (event.key === 'End') onChange(DAY - 5);
+            else step(delta as number);
+          } }}
           accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
           onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 5 : -5)}
           style={{
@@ -263,12 +278,13 @@ export const NotifyPage: React.FC<{ onAllow: () => void; onSkip: () => void; onC
   </Frame>
 );
 
-const requestAlerts = (): void => {
+const requestAlerts = async (): Promise<boolean> => {
   try {
     const N = (globalThis as { Notification?: { requestPermission?: () => Promise<unknown> } }).Notification;
-    if (N && typeof N.requestPermission === 'function') N.requestPermission().catch(() => undefined);
+    if (N && typeof N.requestPermission === 'function') return (await N.requestPermission()) === 'granted';
   } catch {
   }
+  return false;
 };
 
 export const DEFAULT_WAKE = 8 * 60;
@@ -276,11 +292,17 @@ export const DEFAULT_SLEEP = BEDTIME_DEFAULT;
 
 export const OnboardingFlow: React.FC<{
   only?: 'notify';
+  initialWake?: number;
+  initialSleep?: number;
+  onPermission?: (granted: boolean) => void;
   onDone: (result: { wake: number; sleep: number } | null) => void;
-}> = ({ only, onDone }) => {
+}> = ({ only, onDone, initialWake = DEFAULT_WAKE, initialSleep = DEFAULT_SLEEP, onPermission }) => {
   const [step, setStep] = React.useState(only === 'notify' ? 4 : 0);
-  const [wake, setWake] = React.useState(DEFAULT_WAKE);
-  const [sleep, setSleep] = React.useState(DEFAULT_SLEEP);
+  const [wake, setWake] = React.useState(initialWake);
+  const [sleep, setSleep] = React.useState(initialSleep);
+  const live = React.useRef(true);
+  const requesting = React.useRef(false);
+  React.useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
   const close = () => onDone(null);
   const finish = () => onDone(only === 'notify' ? null : { wake, sleep });
   switch (step) {
@@ -296,8 +318,12 @@ export const OnboardingFlow: React.FC<{
       return (
         <NotifyPage
           onAllow={() => {
-            requestAlerts();
-            finish();
+            if (requesting.current) return;
+            requesting.current = true;
+            requestAlerts().then((granted) => {
+              onPermission?.(granted);
+              if (live.current) finish();
+            });
           }}
           onSkip={finish}
           onClose={close}

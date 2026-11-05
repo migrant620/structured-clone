@@ -96,12 +96,13 @@ export type Suggestion = {
   icon: 'at' | 'tv' | 'people' | 'run';
   duration: number;
   followsStart: boolean;
+  start?: number;
 };
 
 export const suggestions: Suggestion[] = [
   { title: 'Answer Emails', range: '07:45 PM - 08:00 PM (15m)', icon: 'at', duration: 15, followsStart: true },
   { title: 'Watch a Movie', range: '07:45 PM - 09:15 PM (90m)', icon: 'tv', duration: 90, followsStart: true },
-  { title: 'Meet with Friends', range: '07:00 PM - 07:10 PM (10m)', icon: 'people', duration: 10, followsStart: false },
+  { title: 'Meet with Friends', range: '07:00 PM - 07:10 PM (10m)', icon: 'people', duration: 10, followsStart: false, start: 19 * 60 },
   { title: 'Go for a Run!', range: '07:45 PM - 08:30 PM (45m)', icon: 'run', duration: 45, followsStart: true },
 ];
 

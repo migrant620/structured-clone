@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { AccessibilityRole, Pressable, Text, TextInput, View } from 'react-native';
 import { TwoToneRun } from '../components/TwoToneRun';
+import { useModalFocus } from '../components/Chrome';
 import { AtIcon, CalendarSmallIcon, RunIcon, TvIcon, Person2Icon, XIcon } from '../icons';
 import { colors, fontFamily } from '../theme/tokens';
-import { DEFAULT_START, durationPresets, formatClock, formatSuggestionRange, Suggestion, suggestions, TASK_COLOURS, titlePlaceholder } from '../store';
+import { DEFAULT_START, durationPresets, formatClock, formatDuration, formatSuggestionRange, Suggestion, suggestions, TASK_COLOURS, titlePlaceholder } from '../store';
 
 const PAGE = colors.page;
 const INK = colors.ink;
@@ -63,7 +64,7 @@ export const EditorSheet: React.FC<{
   start?: number;
   recent?: Suggestion[];
   onTitle: (v: string) => void;
-  onPickSuggestion: (title: string, duration: number) => void;
+  onPickSuggestion: (title: string, duration: number, start?: number) => void;
   onDuration?: (minutes: number) => void;
   onStart?: (minutes: number) => void;
   colour?: string;
@@ -107,7 +108,7 @@ export const EditorSheet: React.FC<{
   const fmt = formatClock;
   const wheelStep = duration === 1 ? 5 : 15;
   const wheelOffsets = [-2 * wheelStep, -wheelStep, wheelStep, 2 * wheelStep];
-  const rootRef = React.useRef<View>(null);
+  const rootRef = useModalFocus(onClose, editing ? 'Edit Task' : undefined, undefined, 'etitle', 'Task editor');
   const stepRef = React.useRef<(dir: number) => void>(() => undefined);
   stepRef.current = (dir: number) => onStart?.(base + dir * wheelStep);
   React.useEffect(() => {
@@ -148,8 +149,10 @@ export const EditorSheet: React.FC<{
   const selectedIndex = Math.max(0, durationPresets.indexOf(duration));
   const segLefts = [22.2, 80.06, 137.91, 196.14, 254.36, 312.58];
   const segWidths = [57.86, 57.86, 58.22, 58.22, 58.22, 58.22];
-  const unitLabel = DURATION_SEGMENTS[selectedIndex].unit;
-  const unitBox = DURATION_SEGMENTS[selectedIndex].box ?? { left: segLefts[selectedIndex], w: segWidths[selectedIndex] };
+  const unitLabel = durationPresets.includes(duration) ? DURATION_SEGMENTS[selectedIndex].unit : formatDuration(duration);
+  const unitBox = durationPresets.includes(duration) && DURATION_SEGMENTS[selectedIndex].box
+    ? DURATION_SEGMENTS[selectedIndex].box!
+    : { left: segLefts[selectedIndex], w: segWidths[selectedIndex] };
   const pillLeft = unitBox.left + unitBox.w / 2 - PILL_W / 2;
   const selectedColour = Math.max(0, TASK_COLOURS.indexOf((colour ?? TASK_COLOURS[0]) as (typeof TASK_COLOURS)[number]));
   const tint = TASK_COLOURS[selectedColour];
@@ -313,7 +316,7 @@ export const EditorSheet: React.FC<{
                 key={s.title}
                 accessibilityRole="button"
                 accessibilityLabel={s.title}
-                onPress={() => onPickSuggestion(s.title, s.duration)}
+                onPress={() => onPickSuggestion(s.title, s.duration, s.followsStart ? base : s.start)}
                 style={{
                   position: 'absolute', left: CARD.left, top, width: CARD.w, height: CARD.h,
                   backgroundColor: '#FFFFFF',
@@ -323,7 +326,7 @@ export const EditorSheet: React.FC<{
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={SUGGESTION_KEYS[s.icon]}
-                  onPress={() => onPickSuggestion(s.title, s.duration)}
+                  onPress={() => onPickSuggestion(s.title, s.duration, s.followsStart ? base : s.start)}
                   style={{ position: 'absolute', left: 32.02 - CARD.left, top: 16.73, width: 24.02, height: 24.02 }}
                 >
                   <Icon size={24} color={colors.accent} />

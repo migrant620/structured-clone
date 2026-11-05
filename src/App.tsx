@@ -150,6 +150,38 @@ export default React.memo(function App() {
     : scenario === 'S10' ? s10Tasks
     : initialTasks;
   const [tasks, setTasks] = React.useState<Task[]>(seed);
+  const [timelineOffset, setTimelineOffset] = React.useState(0);
+  const [notificationsOn, setNotificationsOn] = React.useState(() => typeof Notification !== 'undefined' && Notification.permission === 'granted');
+  const notificationStatus = React.useRef<PermissionStatus | null>(null);
+  React.useEffect(() => {
+    let live = true;
+    let status: PermissionStatus | null = null;
+    const update = () => {
+      if (live && status) setNotificationsOn(status.state === 'granted');
+    };
+    const fallback = () => {
+      if (live) setNotificationsOn(typeof Notification !== 'undefined' && Notification.permission === 'granted');
+    };
+    if (typeof navigator !== 'undefined' && navigator.permissions?.query) {
+      navigator.permissions.query({ name: 'notifications' }).then((result) => {
+        if (!live) return;
+        status = result;
+        notificationStatus.current = result;
+        result.addEventListener('change', update);
+        update();
+      }, fallback);
+    } else fallback();
+    return () => {
+      live = false;
+      status?.removeEventListener('change', update);
+      if (notificationStatus.current === status) notificationStatus.current = null;
+    };
+  }, []);
+  const updateNotificationPermission = React.useCallback((granted: boolean) => {
+    const status = notificationStatus.current;
+    setNotificationsOn(status ? status.state === 'granted' : granted);
+  }, []);
+
   const [tab, setTab] = React.useState<NavKey>(
     scenario === 'S11' ? 'inbox' : scenario === 'S12' ? 'settings' : 'timeline'
   );
@@ -176,7 +208,7 @@ export default React.memo(function App() {
     (result: { wake: number; sleep: number } | null) => {
       const full = onboarding === 'full';
       setOnboarding(null);
-      if (!full) return;
+      if (!full || result === null) return;
       if (result !== null) {
         const wake = result.wake;
         setTasks((s) => s.map((t) => (t.id === 'rise' ? { ...t, start: wake, sub: formatClock(wake) } : t)));
@@ -190,6 +222,13 @@ export default React.memo(function App() {
     scenario === 'S6' || scenario === 'S7' ? 'teamSync' : null
   );
   const [confirmId, setConfirmId] = React.useState<string | null>(scenario === 'S10' ? 'grocery' : null);
+  const confirmReturnId = React.useRef<string | null>(null);
+  const taskOpener = React.useRef<HTMLElement | null>(null);
+  const cancelDelete = () => {
+    setConfirmId(null);
+    setOpenId(confirmReturnId.current);
+    confirmReturnId.current = null;
+  };
 
   const duplicateTask = React.useCallback((id: string) => {
     const copyId = nextTaskId();
@@ -207,6 +246,7 @@ export default React.memo(function App() {
     setTasks((s) => s.filter((t) => t.id !== id));
     setOpenId(null);
     setConfirmId(null);
+    confirmReturnId.current = null;
   }, []);
   const commitTask = React.useCallback((title: string, duration: number, start: number, colour?: string) => {
     const range = formatRange(start, duration);
@@ -249,6 +289,8 @@ export default React.memo(function App() {
     if (id === 'guide-first') { onFab(); return; }
     if (id === 'guide-inbox') { setTab('inbox'); return; }
     if (id === 'guide-own') { setTab('settings'); return; }
+    const active = typeof document !== 'undefined' ? document.activeElement as HTMLElement | null : null;
+    taskOpener.current = active && active !== document.body ? active : null;
     setOpenId(id);
   }, [onFab]);
 
@@ -261,7 +303,7 @@ export default React.memo(function App() {
   escRef.current = () => {
     if (onboarding) { finishOnboarding(null); return true; }
     if (proSurface) { setProSurface(null); return true; }
-    if (confirmId) { setConfirmId(null); return true; }
+    if (confirmId) { cancelDelete(); return true; }
     if (editor) { setEditor(null); return true; }
     if (openId) { setOpenId(null); return true; }
     return false;
@@ -269,7 +311,7 @@ export default React.memo(function App() {
   React.useEffect(() => {
     if (typeof document === 'undefined') return undefined;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && escRef.current()) e.preventDefault();
+      if (e.key === 'Escape' && !e.defaultPrevented && !e.isComposing && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && escRef.current()) e.preventDefault();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -314,6 +356,8 @@ export default React.memo(function App() {
         {tab === 'timeline' ? (
           <TimelineScreen
             tasks={tasks}
+            offset={timelineOffset}
+            onOffset={setTimelineOffset}
             hint={scenario === 'S1' ? (hintParts ? hintParts.join('') : '') : ''}
             hintParts={hintParts}
             tailHint={tailHint}
@@ -331,6 +375,7 @@ export default React.memo(function App() {
             onPro={() => setProSurface('paywall')}
             onGoogleCalendar={() => setProSurface('news')}
             onNotifications={() => setOnboarding('notify')}
+            notificationsOn={notificationsOn}
           />
         ) : null}
         </React.Suspense>
@@ -352,12 +397,14 @@ export default React.memo(function App() {
       <React.Suspense fallback={null}>
       {openTaskObj && !editor ? (
         <DetailSheet
+          returnFocus={taskOpener.current}
           title={openTaskObj.title}
           range={`9/28/26, ${openTaskObj.rangeLabel ?? openTaskObj.sub}`}
           done={openTaskObj.done}
           tint={openTaskObj.colour}
           onToggleDone={() => toggleDone(openTaskObj.id)}
           onDelete={() => {
+            confirmReturnId.current = openTaskObj.id;
             setConfirmId(openTaskObj.id);
             setOpenId(null);
           }}
@@ -376,7 +423,7 @@ export default React.memo(function App() {
         />
       ) : null}
       {confirmId ? (
-        <DeleteDialog onCancel={() => setConfirmId(null)} onDelete={() => deleteTask(confirmId)} />
+        <DeleteDialog onCancel={cancelDelete} onDelete={() => deleteTask(confirmId)} />
       ) : null}
 
       {editor ? (
@@ -388,9 +435,9 @@ export default React.memo(function App() {
           start={editor.start}
           recent={editor.mode === 'new' ? recentSuggestions(tasks) : []}
           onTitle={(v) => setEditor((e) => (e ? { ...e, title: v } : e))}
-          onPickSuggestion={(title: string, minutes: number) =>
+          onPickSuggestion={(title: string, minutes: number, start?: number) =>
             setEditor((e) =>
-              e ? { ...e, title, step: 2, duration: durationPresets.includes(minutes) ? minutes : e.duration } : e
+              e ? { ...e, title, step: 2, duration: Number.isSafeInteger(minutes) && minutes > 0 ? minutes : e.duration, start: start === undefined ? e.start : normalizeMinutes(start) } : e
             )
           }
           onDuration={(minutes: number) => setEditor((e) => (e ? { ...e, duration: minutes } : e))}
@@ -415,7 +462,7 @@ export default React.memo(function App() {
         <WhatsNewSheet onDismiss={() => setProSurface(null)} onLearnMore={() => setProSurface('paywall')} />
       ) : null}
       {proSurface === 'paywall' ? <PaywallSheet onClose={() => setProSurface(null)} /> : null}
-      {onboarding ? <OnboardingFlow only={onboarding === 'notify' ? 'notify' : undefined} onDone={finishOnboarding} /> : null}
+      {onboarding ? <OnboardingFlow only={onboarding === 'notify' ? 'notify' : undefined} initialWake={tasks.find((task) => task.id === 'rise')?.start ?? 8 * 60} initialSleep={bedtime} onPermission={updateNotificationPermission} onDone={finishOnboarding} /> : null}
       </React.Suspense>
     </View>
   );
